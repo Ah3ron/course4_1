@@ -1,5 +1,5 @@
 <script lang="ts">
-	import './layout.css';
+	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { theme } from '$lib/stores';
 	import { onMount } from 'svelte';
@@ -32,7 +32,7 @@
 		<div class="flex-none">
 			<button
 				class="btn btn-ghost btn-circle"
-				on:click={() => theme.toggle()}
+				onclick={() => theme.toggle()}
 				aria-label="Переключить тему"
 			>
 				{#if $theme === 'light'}
