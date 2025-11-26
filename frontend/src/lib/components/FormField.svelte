@@ -11,7 +11,7 @@
 	const spanClass = span === 2 ? 'md:col-span-2' : '';
 </script>
 
-<label class="form-control w-full md:col-span-2">
+<label class="form-control w-full {spanClass}">
 	<div class="label">
 		<span class="label-text font-medium">{label}</span>
 		{#if required}
@@ -20,7 +20,9 @@
 	</div>
 	<input
 		type="number"
-		class="input input-bordered w-full transition-all duration-200 hover:scale-[1.02] {error ? 'input-error animate-shake-input' : 'focus:input-primary focus:scale-[1.02]'}"
+		class="input input-bordered w-full transition-all duration-200 hover:scale-[1.02] {error
+			? 'input-error animate-shake-input'
+			: 'focus:input-primary focus:scale-[1.02]'}"
 		bind:value
 		{step}
 		{placeholder}
@@ -36,4 +38,3 @@
 		</div>
 	{/if}
 </label>
-

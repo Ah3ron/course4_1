@@ -16,7 +16,10 @@
 					<p class="text-xs text-base-content/70">{modelInfo.altman_description}</p>
 				</div>
 			</div>
-			<div class="collapse collapse-plus bg-base-200" transition:fade={{ duration: 200, delay: 100 }}>
+			<div
+				class="collapse collapse-plus bg-base-200"
+				transition:fade={{ duration: 200, delay: 100 }}
+			>
 				<input type="radio" name="model-accordion" />
 				<div class="collapse-title text-sm font-semibold">Модель Таффлера</div>
 				<div class="collapse-content">
@@ -26,4 +29,3 @@
 		</div>
 	</div>
 </div>
-

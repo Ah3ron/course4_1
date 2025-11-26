@@ -39,7 +39,10 @@
 			<h3 class="card-title text-xl">Z-score модель</h3>
 		</div>
 		<div class="space-y-4">
-			<div class="stats stats-vertical shadow w-full" transition:fade={{ duration: 300, delay: 100 }}>
+			<div
+				class="stats stats-vertical shadow w-full"
+				transition:fade={{ duration: 300, delay: 100 }}
+			>
 				<div class="stat">
 					<div class="stat-title">Z-score</div>
 					<div class="stat-value text-3xl animate-count-up">
@@ -57,7 +60,13 @@
 				</div>
 			</div>
 			<div
-				class="alert shadow-lg {getRiskColor(prediction.altman_risk_level) === 'success' ? 'alert-success' : getRiskColor(prediction.altman_risk_level) === 'warning' ? 'alert-warning' : getRiskColor(prediction.altman_risk_level) === 'error' ? 'alert-error' : 'alert-neutral'}"
+				class="alert shadow-lg {getRiskColor(prediction.altman_risk_level) === 'success'
+					? 'alert-success'
+					: getRiskColor(prediction.altman_risk_level) === 'warning'
+						? 'alert-warning'
+						: getRiskColor(prediction.altman_risk_level) === 'error'
+							? 'alert-error'
+							: 'alert-neutral'}"
 				transition:fade={{ duration: 300, delay: 200 }}
 			>
 				<svg
@@ -81,4 +90,3 @@
 		</div>
 	</div>
 </div>
-

@@ -28,12 +28,13 @@ function createPredictionHistory() {
 				try {
 					const parsed = JSON.parse(stored);
 					// Фильтруем только валидные записи с новым форматом
-					const validHistory = Array.isArray(parsed) 
-						? parsed.filter((item: any) => 
-							item?.result?.altman_z_score !== undefined && 
-							item?.result?.taffler_z_score !== undefined &&
-							item?.result?.combined_risk_level !== undefined
-						)
+					const validHistory = Array.isArray(parsed)
+						? parsed.filter(
+								(item: any) =>
+									item?.result?.altman_z_score !== undefined &&
+									item?.result?.taffler_z_score !== undefined &&
+									item?.result?.combined_risk_level !== undefined
+							)
 						: [];
 					set(validHistory);
 					// Сохраняем очищенную историю обратно

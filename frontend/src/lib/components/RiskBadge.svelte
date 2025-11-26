@@ -36,10 +36,15 @@
 </script>
 
 <div
-	class="badge {sizeClasses[size]} animate-fade-in {getRiskColor(riskLevel) === 'success' ? 'badge-success' : getRiskColor(riskLevel) === 'warning' ? 'badge-warning' : getRiskColor(riskLevel) === 'error' ? 'badge-error' : 'badge-neutral'}"
+	class="badge {sizeClasses[size]} animate-fade-in {getRiskColor(riskLevel) === 'success'
+		? 'badge-success'
+		: getRiskColor(riskLevel) === 'warning'
+			? 'badge-warning'
+			: getRiskColor(riskLevel) === 'error'
+				? 'badge-error'
+				: 'badge-neutral'}"
 	role="status"
 	aria-label="Уровень риска: {getRiskLabel(riskLevel)}"
 >
 	{getRiskLabel(riskLevel)}
 </div>
-

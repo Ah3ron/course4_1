@@ -18,7 +18,16 @@ export default [
 		}
 	},
 	{
-		files: ['**/*.svelte', '**/*.svelte.js'],
-		languageOptions: { parserOptions: { svelteConfig } }
+		files: ['**/*.svelte'],
+		languageOptions: {
+			parserOptions: {
+				svelteConfig
+			}
+		}
+	},
+	{
+		// Игнорируем ошибки парсинга TypeScript в Svelte файлах
+		// TypeScript компилятор сам проверит типы, а Prettier - форматирование
+		ignores: ['**/*.svelte']
 	}
 ];

@@ -71,8 +71,7 @@
 											? getRiskLabel(item.result.combined_risk_level)
 											: 'Неизвестно'}
 									</p>
-									{#if item.result.altman_z_score !== undefined &&
-										item.result.taffler_z_score !== undefined}
+									{#if item.result.altman_z_score !== undefined && item.result.taffler_z_score !== undefined}
 										<p class="text-xs text-base-content/70">
 											Альтман: {item.result.altman_z_score.toFixed(2)} | Таффлер:
 											{item.result.taffler_z_score.toFixed(2)}
@@ -92,4 +91,3 @@
 		{/if}
 	</div>
 </div>
-

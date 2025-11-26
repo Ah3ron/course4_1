@@ -13,7 +13,7 @@ export interface FinancialData {
 	market_value_equity: number;
 	total_liabilities: number;
 	sales: number;
-	
+
 	// Данные для модели Таффлера
 	profit_before_tax: number;
 	current_liabilities: number;
@@ -73,7 +73,9 @@ export async function getModelInfo(): Promise<ModelInfo> {
 /**
  * Получить оценку риска банкротства
  */
-export async function predictBankruptcyRisk(financialData: FinancialData): Promise<PredictionResponse> {
+export async function predictBankruptcyRisk(
+	financialData: FinancialData
+): Promise<PredictionResponse> {
 	const response = await fetch(`${API_BASE_URL}/api/predict`, {
 		method: 'POST',
 		headers: {

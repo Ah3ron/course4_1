@@ -32,7 +32,13 @@
 </script>
 
 <div
-	class="alert shadow-lg {getRiskColor(prediction.combined_risk_level) === 'success' ? 'alert-success' : getRiskColor(prediction.combined_risk_level) === 'warning' ? 'alert-warning' : getRiskColor(prediction.combined_risk_level) === 'error' ? 'alert-error' : 'alert-neutral'}"
+	class="alert shadow-lg {getRiskColor(prediction.combined_risk_level) === 'success'
+		? 'alert-success'
+		: getRiskColor(prediction.combined_risk_level) === 'warning'
+			? 'alert-warning'
+			: getRiskColor(prediction.combined_risk_level) === 'error'
+				? 'alert-error'
+				: 'alert-neutral'}"
 	transition:scale={{ start: 0.9, duration: 400 }}
 >
 	<svg
@@ -55,4 +61,3 @@
 		<div class="text-sm mt-1 animate-fade-in-delay-2">{prediction.combined_recommendation}</div>
 	</div>
 </div>
-

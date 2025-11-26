@@ -33,7 +33,13 @@
 			</div>
 		{/if}
 
-		<form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-6">
+		<form
+			onsubmit={(e) => {
+				e.preventDefault();
+				handleSubmit();
+			}}
+			class="space-y-6"
+		>
 			<!-- Модель Альтмана -->
 			<div transition:fade={{ duration: 200 }}>
 				<div class="divider">
@@ -155,4 +161,3 @@
 		</form>
 	</div>
 </div>
-

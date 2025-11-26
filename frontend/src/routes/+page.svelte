@@ -105,7 +105,9 @@
 	<div class="container mx-auto px-4 py-8 max-w-7xl">
 		<!-- Заголовок -->
 		<div class="text-center mb-8" transition:fade={{ duration: 400 }}>
-			<h1 class="text-4xl font-bold mb-2 animate-fade-in-title">Система оценки риска банкротства</h1>
+			<h1 class="text-4xl font-bold mb-2 animate-fade-in-title">
+				Система оценки риска банкротства
+			</h1>
 			<p class="text-lg text-base-content/70 animate-fade-in-subtitle">
 				Модели Альтмана и Таффлера для анализа финансового состояния компании
 			</p>
@@ -120,7 +122,7 @@
 					bind:formErrors
 					isLoading={$isLoading}
 					bind:error
-					handleSubmit={handleSubmit}
+					{handleSubmit}
 				/>
 
 				<!-- Результаты оценки -->
@@ -137,9 +139,11 @@
 				{/if}
 
 				<!-- История оценок -->
-				<PredictionHistory history={$predictionHistory} clearHistory={() => predictionHistory.clear()} />
+				<PredictionHistory
+					history={$predictionHistory}
+					clearHistory={() => predictionHistory.clear()}
+				/>
 			</aside>
 		</div>
 	</div>
 </div>
-
