@@ -22,6 +22,9 @@
 		name="description"
 		content="Система оценки кредитных рисков с использованием машинного обучения"
 	/>
+	<link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/forms@0.5.10/src/index.min.js"></script>
 </svelte:head>
 
 <div class="min-h-screen bg-base-200" data-theme={$theme}>
