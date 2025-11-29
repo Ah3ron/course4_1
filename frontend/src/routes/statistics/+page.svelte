@@ -5,6 +5,8 @@
 		getIndividualStatistics,
 		getCompanyHistory,
 		getIndividualHistory,
+		deleteCompanyAssessment,
+		deleteIndividualAssessment,
 		type CompanyStatistics,
 		type IndividualStatistics,
 		type CompanyHistory,
@@ -65,16 +67,38 @@
 		individualHistory = null;
 		
 		try {
+			// Обрезаем пробелы перед запросом
+			const trimmedCompanyName = searchCompanyName?.trim() || undefined;
+			const trimmedIndividualName = searchIndividualName?.trim() || undefined;
+			
 			if (activeTab === 'companies') {
-				companyStats = await getCompanyStatistics(searchCompanyName || undefined, startDate || undefined, endDate || undefined);
+				companyStats = await getCompanyStatistics(trimmedCompanyName, startDate || undefined, endDate || undefined);
 			} else {
-				individualStats = await getIndividualStatistics(searchIndividualName || undefined, startDate || undefined, endDate || undefined);
+				individualStats = await getIndividualStatistics(trimmedIndividualName, startDate || undefined, endDate || undefined);
 			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Ошибка при загрузке статистики';
 		} finally {
 			isLoading = false;
 		}
+	}
+
+	function clearSearch() {
+		if (activeTab === 'companies') {
+			searchCompanyName = '';
+		} else {
+			searchIndividualName = '';
+		}
+	}
+
+	function clearDates() {
+		startDate = '';
+		endDate = '';
+	}
+
+	function clearAll() {
+		clearSearch();
+		clearDates();
 	}
 
 	async function loadCompanyHistory(companyName: string) {
@@ -131,8 +155,8 @@
 										borderColor: 'rgb(75, 192, 192)',
 										backgroundColor: 'rgba(75, 192, 192, 0.2)',
 										tension: 0.1,
-										pointRadius: isSinglePoint ? [0, 5, 0] : undefined,
-										pointHoverRadius: isSinglePoint ? [0, 7, 0] : undefined
+										pointRadius: isSinglePoint ? [0, 8, 0] : 8,
+										pointHoverRadius: isSinglePoint ? [0, 10, 0] : 10
 									},
 									{
 										label: 'T-score (Таффлер)',
@@ -140,8 +164,8 @@
 										borderColor: 'rgb(255, 99, 132)',
 										backgroundColor: 'rgba(255, 99, 132, 0.2)',
 										tension: 0.1,
-										pointRadius: isSinglePoint ? [0, 5, 0] : undefined,
-										pointHoverRadius: isSinglePoint ? [0, 7, 0] : undefined
+										pointRadius: isSinglePoint ? [0, 8, 0] : 8,
+										pointHoverRadius: isSinglePoint ? [0, 10, 0] : 10
 									}
 								]
 							},
@@ -233,8 +257,8 @@
 										borderColor: 'rgb(54, 162, 235)',
 										backgroundColor: 'rgba(54, 162, 235, 0.2)',
 										tension: 0.1,
-										pointRadius: isSinglePoint ? [0, 5, 0] : undefined,
-										pointHoverRadius: isSinglePoint ? [0, 7, 0] : undefined
+										pointRadius: isSinglePoint ? [0, 8, 0] : 8,
+										pointHoverRadius: isSinglePoint ? [0, 10, 0] : 10
 									}
 								]
 							},
@@ -383,6 +407,42 @@
 		selectedIndividual = null;
 		individualHistory = null;
 	}
+
+	async function deleteCompany(assessmentId: number) {
+		if (!confirm('Вы уверены, что хотите удалить эту запись?')) {
+			return;
+		}
+		
+		isLoading = true;
+		error = null;
+		try {
+			await deleteCompanyAssessment(assessmentId);
+			// Перезагружаем статистику
+			await loadStatistics();
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Ошибка при удалении записи';
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	async function deleteIndividual(assessmentId: number) {
+		if (!confirm('Вы уверены, что хотите удалить эту запись?')) {
+			return;
+		}
+		
+		isLoading = true;
+		error = null;
+		try {
+			await deleteIndividualAssessment(assessmentId);
+			// Перезагружаем статистику
+			await loadStatistics();
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Ошибка при удалении записи';
+		} finally {
+			isLoading = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -398,52 +458,65 @@
 			<p class="text-lg md:text-xl text-base-content/70 animate-fade-in-subtitle">Просмотр данных по всем организациям и физическим лицам</p>
 		</div>
 
-		<!-- Табы -->
-		<div class="tabs tabs-boxed mb-6 justify-center smooth-appear">
-			<button
-				class="tab {activeTab === 'companies' ? 'tab-active' : ''}"
-				onclick={async () => {
-					// Уничтожаем графики перед переключением
-					if (companyChartInstance) {
-						companyChartInstance.destroy();
-						companyChartInstance = null;
-					}
-					if (individualChartInstance) {
-						individualChartInstance.destroy();
-						individualChartInstance = null;
-					}
-					activeTab = 'companies';
-					selectedCompany = null;
-					selectedIndividual = null;
-					companyHistory = null;
-					individualHistory = null;
-					await loadStatistics();
-				}}
-			>
-				Юридические лица
-			</button>
-			<button
-				class="tab {activeTab === 'individuals' ? 'tab-active' : ''}"
-				onclick={async () => {
-					// Уничтожаем графики перед переключением
-					if (companyChartInstance) {
-						companyChartInstance.destroy();
-						companyChartInstance = null;
-					}
-					if (individualChartInstance) {
-						individualChartInstance.destroy();
-						individualChartInstance = null;
-					}
-					activeTab = 'individuals';
-					selectedCompany = null;
-					selectedIndividual = null;
-					companyHistory = null;
-					individualHistory = null;
-					await loadStatistics();
-				}}
-			>
-				Физические лица
-			</button>
+		<!-- Переключатель типа заемщика -->
+		<div class="card bg-base-100 shadow-xl mb-6 smooth-appear">
+			<div class="card-body py-5">
+				<div class="form-control">
+					<label class="label cursor-pointer justify-center py-2">
+						<span class="label-text text-lg font-semibold mr-4">Тип заемщика:</span>
+						<div class="join">
+							<button
+								class="join-item btn {activeTab === 'companies'
+									? 'btn-primary'
+									: 'btn-outline btn-ghost'}"
+								onclick={async () => {
+									// Уничтожаем графики перед переключением
+									if (companyChartInstance) {
+										companyChartInstance.destroy();
+										companyChartInstance = null;
+									}
+									if (individualChartInstance) {
+										individualChartInstance.destroy();
+										individualChartInstance = null;
+									}
+									activeTab = 'companies';
+									selectedCompany = null;
+									selectedIndividual = null;
+									companyHistory = null;
+									individualHistory = null;
+									await loadStatistics();
+								}}
+							>
+								Юридические лица
+							</button>
+							<button
+								class="join-item btn {activeTab === 'individuals'
+									? 'btn-primary'
+									: 'btn-outline btn-ghost'}"
+								onclick={async () => {
+									// Уничтожаем графики перед переключением
+									if (companyChartInstance) {
+										companyChartInstance.destroy();
+										companyChartInstance = null;
+									}
+									if (individualChartInstance) {
+										individualChartInstance.destroy();
+										individualChartInstance = null;
+									}
+									activeTab = 'individuals';
+									selectedCompany = null;
+									selectedIndividual = null;
+									companyHistory = null;
+									individualHistory = null;
+									await loadStatistics();
+								}}
+							>
+								Физические лица
+							</button>
+						</div>
+					</label>
+				</div>
+			</div>
 		</div>
 
 		{#if error}
@@ -455,27 +528,109 @@
 		<!-- Фильтры -->
 		<div class="card bg-base-100 shadow-xl mb-6 smooth-appear">
 			<div class="card-body p-5">
-				<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-					{#if activeTab === 'companies'}
-						<input
-							type="text"
-							placeholder="Название компании"
-							class="input input-bordered"
-							bind:value={searchCompanyName}
-						/>
-					{:else}
-						<input
-							type="text"
-							placeholder="ФИО"
-							class="input input-bordered"
-							bind:value={searchIndividualName}
-						/>
-					{/if}
-					<input type="date" class="input input-bordered" bind:value={startDate} placeholder="Дата начала" />
-					<input type="date" class="input input-bordered" bind:value={endDate} placeholder="Дата окончания" />
-					<button class="btn btn-primary" onclick={loadStatistics} disabled={isLoading}>
-						{isLoading ? 'Загрузка...' : 'Поиск'}
-					</button>
+				<div class="flex flex-col md:flex-row gap-4 items-end">
+					<!-- Поле ввода -->
+					<div class="flex-1 w-full md:w-auto">
+						<label class="input input-bordered w-full flex items-center gap-2 pr-2">
+							{#if activeTab === 'companies'}
+								<input
+									type="text"
+									placeholder="Название компании"
+									class="grow border-none outline-none bg-transparent"
+									bind:value={searchCompanyName}
+								/>
+							{:else}
+								<input
+									type="text"
+									placeholder="ФИО"
+									class="grow border-none outline-none bg-transparent"
+									bind:value={searchIndividualName}
+								/>
+							{/if}
+							{#if (activeTab === 'companies' && searchCompanyName) || (activeTab === 'individuals' && searchIndividualName)}
+								<button
+									type="button"
+									class="btn btn-ghost btn-sm btn-circle h-6 w-6 min-h-0 p-0 flex-shrink-0"
+									onclick={clearSearch}
+									title="Очистить"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-4 w-4"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M6 18L18 6M6 6l12 12"
+										/>
+									</svg>
+								</button>
+							{/if}
+						</label>
+					</div>
+					
+					<!-- Даты и кнопка поиска -->
+					<div class="flex gap-4">
+						<label class="input input-bordered flex items-center gap-2 pr-2">
+							<input type="date" class="grow border-none outline-none bg-transparent" bind:value={startDate} placeholder="Дата начала" />
+							{#if startDate}
+								<button
+									type="button"
+									class="btn btn-ghost btn-sm btn-circle h-6 w-6 min-h-0 p-0 flex-shrink-0"
+									onclick={() => startDate = ''}
+									title="Очистить"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-4 w-4"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M6 18L18 6M6 6l12 12"
+										/>
+									</svg>
+								</button>
+							{/if}
+						</label>
+						<label class="input input-bordered flex items-center gap-2 pr-2">
+							<input type="date" class="grow border-none outline-none bg-transparent" bind:value={endDate} placeholder="Дата окончания" />
+							{#if endDate}
+								<button
+									type="button"
+									class="btn btn-ghost btn-sm btn-circle h-6 w-6 min-h-0 p-0 flex-shrink-0"
+									onclick={() => endDate = ''}
+									title="Очистить"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-4 w-4"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M6 18L18 6M6 6l12 12"
+										/>
+									</svg>
+								</button>
+							{/if}
+						</label>
+						<button class="btn btn-primary" onclick={loadStatistics} disabled={isLoading}>
+							{isLoading ? 'Загрузка...' : 'Поиск'}
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -590,12 +745,35 @@
 												</span>
 											</td>
 											<td>
-												<button
-													class="btn btn-sm btn-primary"
-													onclick={() => loadCompanyHistory(assessment.company_name)}
-												>
-													История
-												</button>
+												<div class="flex gap-2">
+													<button
+														class="btn btn-sm btn-primary"
+														onclick={() => loadCompanyHistory(assessment.company_name)}
+													>
+														История
+													</button>
+													<button
+														class="btn btn-sm btn-error"
+														onclick={() => deleteCompany(assessment.id)}
+														disabled={isLoading}
+														title="Удалить запись"
+													>
+														<svg
+															xmlns="http://www.w3.org/2000/svg"
+															class="h-4 w-4"
+															fill="none"
+															viewBox="0 0 24 24"
+															stroke="currentColor"
+														>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+															/>
+														</svg>
+													</button>
+												</div>
 											</td>
 										</tr>
 									{/each}
@@ -711,12 +889,35 @@
 											</td>
 											<td>{assessment.credit_amount.toLocaleString('ru-RU')}</td>
 											<td>
-												<button
-													class="btn btn-sm btn-primary"
-													onclick={() => loadIndividualHistory(assessment.full_name)}
-												>
-													История
-												</button>
+												<div class="flex gap-2">
+													<button
+														class="btn btn-sm btn-primary"
+														onclick={() => loadIndividualHistory(assessment.full_name)}
+													>
+														История
+													</button>
+													<button
+														class="btn btn-sm btn-error"
+														onclick={() => deleteIndividual(assessment.id)}
+														disabled={isLoading}
+														title="Удалить запись"
+													>
+														<svg
+															xmlns="http://www.w3.org/2000/svg"
+															class="h-4 w-4"
+															fill="none"
+															viewBox="0 0 24 24"
+															stroke="currentColor"
+														>
+															<path
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																stroke-width="2"
+																d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+															/>
+														</svg>
+													</button>
+												</div>
 											</td>
 										</tr>
 									{/each}

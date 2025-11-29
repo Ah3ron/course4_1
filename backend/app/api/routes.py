@@ -450,3 +450,75 @@ async def get_individual_history(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Ошибка при получении истории: {str(e)}"
         )
+
+
+@router.delete("/statistics/companies/{assessment_id}")
+async def delete_company_assessment(
+    assessment_id: int,
+    db: Session = Depends(get_db)
+):
+    """Удалить оценку компании по ID."""
+    try:
+        assessment = db.query(CompanyAssessment).filter(CompanyAssessment.id == assessment_id).first()
+        
+        if not assessment:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Оценка с ID {assessment_id} не найдена"
+            )
+        
+        company_name = assessment.company_name
+        db.delete(assessment)
+        db.commit()
+        
+        logger.info(f"Оценка компании с ID {assessment_id} ({company_name}) удалена")
+        
+        return {
+            "message": f"Оценка компании '{company_name}' успешно удалена",
+            "id": assessment_id
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Ошибка при удалении оценки компании: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка при удалении оценки: {str(e)}"
+        )
+
+
+@router.delete("/statistics/individuals/{assessment_id}")
+async def delete_individual_assessment(
+    assessment_id: int,
+    db: Session = Depends(get_db)
+):
+    """Удалить оценку физического лица по ID."""
+    try:
+        assessment = db.query(IndividualAssessment).filter(IndividualAssessment.id == assessment_id).first()
+        
+        if not assessment:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Оценка с ID {assessment_id} не найдена"
+            )
+        
+        full_name = assessment.full_name
+        db.delete(assessment)
+        db.commit()
+        
+        logger.info(f"Оценка физ. лица с ID {assessment_id} ({full_name}) удалена")
+        
+        return {
+            "message": f"Оценка физического лица '{full_name}' успешно удалена",
+            "id": assessment_id
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Ошибка при удалении оценки физ. лица: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка при удалении оценки: {str(e)}"
+        )

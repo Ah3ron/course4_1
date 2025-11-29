@@ -253,3 +253,35 @@ export async function getIndividualHistory(fullName: string): Promise<Individual
 	}
 	return response.json();
 }
+
+/**
+ * Удалить оценку компании по ID
+ */
+export async function deleteCompanyAssessment(assessmentId: number): Promise<void> {
+	const response = await fetch(
+		`${API_BASE_URL}/api/statistics/companies/${assessmentId}`,
+		{
+			method: 'DELETE'
+		}
+	);
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ detail: 'Не удалось удалить оценку компании' }));
+		throw new Error(error.detail || 'Не удалось удалить оценку компании');
+	}
+}
+
+/**
+ * Удалить оценку физического лица по ID
+ */
+export async function deleteIndividualAssessment(assessmentId: number): Promise<void> {
+	const response = await fetch(
+		`${API_BASE_URL}/api/statistics/individuals/${assessmentId}`,
+		{
+			method: 'DELETE'
+		}
+	);
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ detail: 'Не удалось удалить оценку физического лица' }));
+		throw new Error(error.detail || 'Не удалось удалить оценку физического лица');
+	}
+}
