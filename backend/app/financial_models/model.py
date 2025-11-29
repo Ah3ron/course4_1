@@ -1,5 +1,5 @@
 """
-Модуль для работы с финансовыми моделями оценки банкротства.
+Модуль для работы с финансовыми моделями оценки кредитных рисков.
 """
 
 import logging
@@ -15,16 +15,15 @@ logger = logging.getLogger(__name__)
 
 # Обязательные поля для моделей
 REQUIRED_FIELDS_ALTMAN = [
-    'working_capital', 'total_assets', 'retained_earnings',
-    'ebit', 'market_value_equity', 'total_liabilities', 'sales'
+    'current_assets', 'current_liabilities', 'debt_capital', 'liabilities'
 ]
 
 REQUIRED_FIELDS_TAFFLER = [
-    'profit_before_tax', 'current_liabilities', 'current_assets',
-    'total_liabilities', 'total_assets', 'operating_income'
+    'sales_profit', 'short_term_liabilities', 'current_assets',
+    'liabilities', 'long_term_liabilities', 'total_assets', 'sales'
 ]
 
-POSITIVE_FIELDS = ['total_assets', 'total_liabilities', 'current_liabilities']
+POSITIVE_FIELDS = ['current_liabilities', 'liabilities', 'short_term_liabilities', 'total_assets']
 
 
 def validate_financial_data(financial_data: Dict) -> Tuple[bool, Optional[str]]:
@@ -54,7 +53,7 @@ def validate_financial_data(financial_data: Dict) -> Tuple[bool, Optional[str]]:
 
 def calculate_bankruptcy_risk(financial_data: Dict) -> Dict:
     """
-    Рассчитывает риск банкротства используя модели Альтмана и Таффлера.
+    Рассчитывает кредитный риск используя статистические модели Альтмана и Таффлера.
     
     Args:
         financial_data: Словарь с финансовыми показателями
@@ -108,7 +107,7 @@ def calculate_bankruptcy_risk(financial_data: Dict) -> Dict:
         }
         
     except Exception as e:
-        logger.error(f"Ошибка при расчете риска банкротства: {e}", exc_info=True)
+        logger.error(f"Ошибка при расчете кредитного риска: {e}", exc_info=True)
         raise ValueError(f"Ошибка при выполнении расчета: {str(e)}")
 
 
@@ -122,13 +121,15 @@ def get_model_info() -> Dict:
     return {
         'models': ['altman', 'taffler'],
         'altman_description': (
-            'Модель Альтмана (Z-score) - классическая модель для прогнозирования банкротства, '
-            'разработанная Эдвардом Альтманом в 1968 году. Использует 5 финансовых коэффициентов '
-            'для оценки вероятности банкротства компании в течение 2 лет.'
+            'Модель Альтмана (Z-score) - статистическая модель для оценки кредитных рисков. '
+            'Использует коэффициент текущей ликвидности и отношение заемного капитала к пассивам '
+            'для оценки кредитоспособности компании.'
         ),
         'taffler_description': (
-            'Модель Таффлера - модель прогнозирования банкротства, разработанная Ричардом Таффлером. '
-            'Использует 4 финансовых коэффициента и показывает эффективность в различных отраслях.'
+            'Модель Таффлера - статистическая модель оценки кредитных рисков, разработанная Ричардом Таффлером в 1977 году. '
+            'Использует 4 финансовых коэффициента: отношение прибыли от продаж к краткосрочным обязательствам, '
+            'отношение оборотных активов к обязательствам, отношение долгосрочных обязательств к активам, '
+            'и отношение выручки к активам для комплексной оценки кредитоспособности.'
         ),
         'required_fields': {
             'altman': REQUIRED_FIELDS_ALTMAN,

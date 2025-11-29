@@ -47,64 +47,9 @@
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
 					<FormField
-						label="Оборотный капитал"
-						bind:value={formData.working_capital}
-						hint="Текущие активы минус текущие обязательства"
-					/>
-
-					<FormField
-						label="Общие активы"
-						bind:value={formData.total_assets}
-						error={formErrors.total_assets}
-						required={true}
-						hint="Сумма всех активов компании"
-					/>
-
-					<FormField
-						label="Нераспределенная прибыль"
-						bind:value={formData.retained_earnings}
-						hint="Накопленная прибыль компании"
-					/>
-
-					<FormField
-						label="EBIT"
-						bind:value={formData.ebit}
-						hint="Прибыль до уплаты процентов и налогов"
-					/>
-
-					<FormField
-						label="Рыночная стоимость капитала"
-						bind:value={formData.market_value_equity}
-						hint="Рыночная капитализация компании"
-					/>
-
-					<FormField
-						label="Общие обязательства"
-						bind:value={formData.total_liabilities}
-						error={formErrors.total_liabilities}
-						required={true}
-						hint="Сумма всех обязательств компании"
-					/>
-
-					<FormField
-						label="Выручка"
-						bind:value={formData.sales}
-						span={2}
-						hint="Объем продаж компании"
-					/>
-				</div>
-			</div>
-
-			<!-- Модель Таффлера -->
-			<div transition:fade={{ duration: 200, delay: 100 }}>
-				<div class="divider">
-					<span class="text-lg font-semibold">Данные для модели Таффлера</span>
-				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-					<FormField
-						label="Прибыль до налогообложения"
-						bind:value={formData.profit_before_tax}
-						hint="Прибыль до уплаты налогов"
+						label="Текущие активы"
+						bind:value={formData.current_assets}
+						hint="Активы, обращаемые в деньги в течение года"
 					/>
 
 					<FormField
@@ -116,15 +61,74 @@
 					/>
 
 					<FormField
+						label="Заемный капитал"
+						bind:value={formData.debt_capital}
+						hint="Сумма заемных средств компании"
+					/>
+
+					<FormField
+						label="Пассивы"
+						bind:value={formData.liabilities}
+						error={formErrors.liabilities}
+						required={true}
+						hint="Общая сумма пассивов компании"
+					/>
+				</div>
+			</div>
+
+			<!-- Модель Таффлера -->
+			<div transition:fade={{ duration: 200, delay: 100 }}>
+				<div class="divider">
+					<span class="text-lg font-semibold">Данные для модели Таффлера</span>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+					<FormField
+						label="Прибыль от продаж"
+						bind:value={formData.sales_profit}
+						hint="Прибыль от реализации продукции"
+					/>
+
+					<FormField
+						label="Краткосрочные обязательства"
+						bind:value={formData.short_term_liabilities}
+						error={formErrors.short_term_liabilities}
+						required={true}
+						hint="Обязательства со сроком погашения до года"
+					/>
+
+					<FormField
 						label="Текущие активы"
 						bind:value={formData.current_assets}
 						hint="Активы, обращаемые в деньги в течение года"
 					/>
 
 					<FormField
-						label="Операционная прибыль"
-						bind:value={formData.operating_income}
-						hint="Прибыль от основной деятельности"
+						label="Обязательства"
+						bind:value={formData.liabilities}
+						error={formErrors.liabilities}
+						required={true}
+						hint="Общая сумма обязательств компании"
+					/>
+
+					<FormField
+						label="Долгосрочные обязательства"
+						bind:value={formData.long_term_liabilities}
+						hint="Обязательства со сроком погашения более года"
+					/>
+
+					<FormField
+						label="Общая сумма активов"
+						bind:value={formData.total_assets}
+						error={formErrors.total_assets}
+						required={true}
+						hint="Сумма всех активов компании"
+					/>
+
+					<FormField
+						label="Выручка от продаж"
+						bind:value={formData.sales}
+						span={2}
+						hint="Объем продаж компании"
 					/>
 				</div>
 			</div>
@@ -154,7 +158,7 @@
 								d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
 							/>
 						</svg>
-						Оценить риск банкротства
+						Оценить кредитный риск
 					{/if}
 				</button>
 			</div>

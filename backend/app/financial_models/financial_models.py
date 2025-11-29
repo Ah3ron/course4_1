@@ -1,6 +1,6 @@
 """
-Модуль для расчета финансовых моделей оценки банкротства.
-Реализует модель Альтмана (Z-score) и модель Таффлера.
+Модуль для расчета финансовых моделей оценки кредитных рисков.
+Реализует статистические модели Альтмана (Z-score) и Таффлера.
 """
 
 import logging
@@ -9,84 +9,77 @@ from typing import Dict, Tuple
 logger = logging.getLogger(__name__)
 
 # Пороговые значения для моделей
-ALTMAN_SAFE_THRESHOLD = 2.99
-ALTMAN_GRAY_THRESHOLD = 1.81
-TAFFLER_LOW_RISK_THRESHOLD = 0.2
-TAFFLER_MEDIUM_RISK_THRESHOLD = 0.0
+# Для модели Альтмана: чем выше Z, тем ниже риск (но формула может давать отрицательные значения)
+ALTMAN_SAFE_THRESHOLD = 0.0
+ALTMAN_GRAY_THRESHOLD = -0.5
+# Для модели Таффлера: значения от 0 до 1, чем выше, тем лучше
+TAFFLER_LOW_RISK_THRESHOLD = 0.5
+TAFFLER_MEDIUM_RISK_THRESHOLD = 0.3
 
 
 def calculate_altman_z_score(financial_data: Dict[str, float]) -> Tuple[float, str, str]:
     """
     Рассчитывает Z-score по модели Альтмана.
     
-    Модель Альтмана для производственных компаний:
-    Z = 1.2*X1 + 1.4*X2 + 3.3*X3 + 0.6*X4 + 1.0*X5
+    Модель Альтмана:
+    Z = -0.3877 - 1.0736 * Кт.л. + 0.0579 * (ЗК / П)
     
     Где:
-    X1 = Working Capital / Total Assets
-    X2 = Retained Earnings / Total Assets
-    X3 = EBIT / Total Assets
-    X4 = Market Value of Equity / Total Liabilities
-    X5 = Sales / Total Assets
+    Кт.л. = коэффициент текущей ликвидности (текущие активы / текущие обязательства)
+    ЗК = заемный капитал
+    П = пассивы
     
     Интерпретация:
-    - Z > 2.99: Безопасная зона (низкий риск банкротства)
-    - 1.81 < Z < 2.99: Серая зона (средний риск)
-    - Z < 1.81: Зона опасности (высокий риск банкротства)
+    - Z > 0.0: Безопасная зона (низкий кредитный риск)
+    - -0.5 < Z < 0.0: Серая зона (средний кредитный риск)
+    - Z < -0.5: Зона опасности (высокий кредитный риск)
     
     Args:
         financial_data: Словарь с финансовыми показателями:
-            - working_capital: Оборотный капитал
-            - total_assets: Общие активы
-            - retained_earnings: Нераспределенная прибыль
-            - ebit: Прибыль до уплаты процентов и налогов
-            - market_value_equity: Рыночная стоимость собственного капитала
-            - total_liabilities: Общие обязательства
-            - sales: Выручка
+            - current_assets: Текущие активы
+            - current_liabilities: Текущие обязательства
+            - debt_capital: Заемный капитал
+            - liabilities: Пассивы
     
     Returns:
         Tuple (z_score, risk_level, recommendation)
     """
     try:
         # Извлекаем данные
-        working_capital = financial_data.get('working_capital', 0)
-        total_assets = financial_data.get('total_assets', 1)  # Избегаем деления на 0
-        retained_earnings = financial_data.get('retained_earnings', 0)
-        ebit = financial_data.get('ebit', 0)
-        market_value_equity = financial_data.get('market_value_equity', 0)
-        total_liabilities = financial_data.get('total_liabilities', 1)  # Избегаем деления на 0
-        sales = financial_data.get('sales', 0)
+        current_assets = financial_data.get('current_assets', 0)
+        current_liabilities = financial_data.get('current_liabilities', 1)  # Избегаем деления на 0
+        debt_capital = financial_data.get('debt_capital', 0)
+        liabilities = financial_data.get('liabilities', 1)  # Избегаем деления на 0
         
         # Проверка на валидность данных
-        if total_assets <= 0:
-            raise ValueError("Общие активы должны быть положительными")
-        if total_liabilities <= 0:
-            raise ValueError("Общие обязательства должны быть положительными")
+        if current_liabilities <= 0:
+            raise ValueError("Текущие обязательства должны быть положительными")
+        if liabilities <= 0:
+            raise ValueError("Пассивы должны быть положительными")
         
-        # Расчет коэффициентов
-        x1 = working_capital / total_assets
-        x2 = retained_earnings / total_assets
-        x3 = ebit / total_assets
-        x4 = market_value_equity / total_liabilities
-        x5 = sales / total_assets
+        # Расчет коэффициента текущей ликвидности
+        current_liquidity_ratio = current_assets / current_liabilities
         
-        # Расчет Z-score
-        z_score = 1.2 * x1 + 1.4 * x2 + 3.3 * x3 + 0.6 * x4 + 1.0 * x5
+        # Расчет отношения заемного капитала к пассивам
+        debt_to_liabilities = debt_capital / liabilities
+        
+        # Расчет Z-score по модели Альтмана
+        z_score = -0.3877 - 1.0736 * current_liquidity_ratio + 0.0579 * debt_to_liabilities
         
         # Определение уровня риска
         if z_score > ALTMAN_SAFE_THRESHOLD:
             risk_level = "low"
-            recommendation = "Низкий риск банкротства. Компания находится в безопасной зоне."
+            recommendation = "Низкий кредитный риск. Компания находится в безопасной зоне."
         elif z_score > ALTMAN_GRAY_THRESHOLD:
             risk_level = "medium"
             recommendation = (
-                "Средний риск банкротства. Компания находится в серой зоне. "
+                "Средний кредитный риск. Компания находится в серой зоне. "
                 "Требуется дополнительный мониторинг."
             )
         else:
             risk_level = "high"
             recommendation = (
-                "Высокий риск банкротства. Компания находится в зоне опасности. "
+                "Высокий кредитный риск. Компания находится в зоне опасности. "
                 "Требуются срочные меры."
             )
         
@@ -99,80 +92,82 @@ def calculate_altman_z_score(financial_data: Dict[str, float]) -> Tuple[float, s
 
 def calculate_taffler_score(financial_data: Dict[str, float]) -> Tuple[float, str, str]:
     """
-    Рассчитывает Z-score по модели Таффлера.
+    Рассчитывает T-score по модели Таффлера.
     
     Модель Таффлера:
-    Z = 3.2 + 12.18*X1 + 2.50*X2 - 10.68*X3 + 0.029*X4
+    Т = 0.53*Х1 + 0.13*Х2 + 0.18*Х3 + 0.16*Х4
     
     Где:
-    X1 = Profit before Tax / Current Liabilities
-    X2 = Current Assets / Total Liabilities
-    X3 = Current Liabilities / Total Assets
-    X4 = No Credit Interval (Operating Income / Total Assets) * 100
+    Х1 = отношение прибыли от продаж к краткосрочным обязательствам
+    Х2 = отношение оборотных активов к обязательствам
+    Х3 = отношение долгосрочных обязательств к общей сумме активов
+    Х4 = отношение выручки от продаж к суммарным активам
     
     Интерпретация:
-    - Z > 0.2: Низкий риск банкротства
-    - 0.0 < Z < 0.2: Средний риск
-    - Z < 0.0: Высокий риск банкротства
+    - Т > 0.5: Низкий кредитный риск
+    - 0.3 < Т < 0.5: Средний кредитный риск
+    - Т < 0.3: Высокий кредитный риск
     
     Args:
         financial_data: Словарь с финансовыми показателями:
-            - profit_before_tax: Прибыль до налогообложения
-            - current_liabilities: Текущие обязательства
-            - current_assets: Текущие активы
-            - total_liabilities: Общие обязательства
-            - total_assets: Общие активы
-            - operating_income: Операционная прибыль
+            - sales_profit: Прибыль от продаж
+            - short_term_liabilities: Краткосрочные обязательства
+            - current_assets: Оборотные активы
+            - liabilities: Обязательства
+            - long_term_liabilities: Долгосрочные обязательства
+            - total_assets: Общая сумма активов
+            - sales: Выручка от продаж
     
     Returns:
-        Tuple (z_score, risk_level, recommendation)
+        Tuple (t_score, risk_level, recommendation)
     """
     try:
         # Извлекаем данные
-        profit_before_tax = financial_data.get('profit_before_tax', 0)
-        current_liabilities = financial_data.get('current_liabilities', 1)  # Избегаем деления на 0
+        sales_profit = financial_data.get('sales_profit', 0)
+        short_term_liabilities = financial_data.get('short_term_liabilities', 1)  # Избегаем деления на 0
         current_assets = financial_data.get('current_assets', 0)
-        total_liabilities = financial_data.get('total_liabilities', 1)  # Избегаем деления на 0
+        liabilities = financial_data.get('liabilities', 1)  # Избегаем деления на 0
+        long_term_liabilities = financial_data.get('long_term_liabilities', 0)
         total_assets = financial_data.get('total_assets', 1)  # Избегаем деления на 0
-        operating_income = financial_data.get('operating_income', 0)
+        sales = financial_data.get('sales', 0)
         
         # Проверка на валидность данных
         if total_assets <= 0:
             raise ValueError("Общие активы должны быть положительными")
-        if current_liabilities <= 0:
-            raise ValueError("Текущие обязательства должны быть положительными")
-        if total_liabilities <= 0:
-            raise ValueError("Общие обязательства должны быть положительными")
+        if short_term_liabilities <= 0:
+            raise ValueError("Краткосрочные обязательства должны быть положительными")
+        if liabilities <= 0:
+            raise ValueError("Обязательства должны быть положительными")
         
         # Расчет коэффициентов
-        x1 = profit_before_tax / current_liabilities
-        x2 = current_assets / total_liabilities
-        x3 = current_liabilities / total_assets
-        x4 = (operating_income / total_assets) * 100  # No Credit Interval в процентах
+        x1 = sales_profit / short_term_liabilities
+        x2 = current_assets / liabilities
+        x3 = long_term_liabilities / total_assets
+        x4 = sales / total_assets
         
-        # Расчет Z-score по модели Таффлера
-        z_score = 3.2 + 12.18 * x1 + 2.50 * x2 - 10.68 * x3 + 0.029 * x4
+        # Расчет T-score по модели Таффлера
+        t_score = 0.53 * x1 + 0.13 * x2 + 0.18 * x3 + 0.16 * x4
         
         # Определение уровня риска
-        if z_score > TAFFLER_LOW_RISK_THRESHOLD:
+        if t_score > TAFFLER_LOW_RISK_THRESHOLD:
             risk_level = "low"
-            recommendation = "Низкий риск банкротства. Финансовое положение компании стабильное."
-        elif z_score > TAFFLER_MEDIUM_RISK_THRESHOLD:
+            recommendation = "Низкий кредитный риск. Финансовое положение компании стабильное."
+        elif t_score > TAFFLER_MEDIUM_RISK_THRESHOLD:
             risk_level = "medium"
             recommendation = (
-                "Средний риск банкротства. Требуется внимательный мониторинг "
+                "Средний кредитный риск. Требуется внимательный мониторинг "
                 "финансовых показателей."
             )
         else:
             risk_level = "high"
             recommendation = (
-                "Высокий риск банкротства. Финансовое положение компании критическое."
+                "Высокий кредитный риск. Финансовое положение компании критическое."
             )
         
-        return z_score, risk_level, recommendation
+        return t_score, risk_level, recommendation
         
     except Exception as e:
-        logger.error(f"Ошибка при расчете Z-score Таффлера: {e}")
+        logger.error(f"Ошибка при расчете T-score Таффлера: {e}")
         raise ValueError(f"Ошибка расчета модели Таффлера: {str(e)}")
 
 
@@ -182,7 +177,7 @@ def calculate_combined_risk(altman_score: float, taffler_score: float) -> Tuple[
     
     Args:
         altman_score: Z-score модели Альтмана
-        taffler_score: Z-score модели Таффлера
+        taffler_score: T-score модели Таффлера
     
     Returns:
         Tuple (combined_risk_level, combined_recommendation)
@@ -209,17 +204,17 @@ def calculate_combined_risk(altman_score: float, taffler_score: float) -> Tuple[
     # Формируем рекомендацию
     if combined_risk_level == "low":
         recommendation = (
-            "Обе модели показывают низкий риск банкротства. "
+            "Обе модели показывают низкий кредитный риск. "
             "Компания находится в стабильном финансовом положении."
         )
     elif combined_risk_level == "medium":
         recommendation = (
-            "Модели показывают средний уровень риска. "
+            "Модели показывают средний уровень кредитного риска. "
             "Рекомендуется регулярный мониторинг финансовых показателей и принятие мер по улучшению финансового состояния."
         )
     else:
         recommendation = (
-            "Обе модели указывают на высокий риск банкротства. "
+            "Обе модели указывают на высокий кредитный риск. "
             "Требуются срочные меры по стабилизации финансового положения компании."
         )
     

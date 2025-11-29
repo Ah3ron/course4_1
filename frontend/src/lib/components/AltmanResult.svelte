@@ -49,12 +49,12 @@
 						{prediction.altman_z_score.toFixed(4)}
 					</div>
 					<div class="stat-desc">
-						{#if prediction.altman_z_score > 2.99}
-							Безопасная зона (Z &gt; 2.99)
-						{:else if prediction.altman_z_score > 1.81}
-							Серая зона (1.81 &lt; Z &lt; 2.99)
+						{#if prediction.altman_z_score > 0.0}
+							Безопасная зона (Z &gt; 0.0)
+						{:else if prediction.altman_z_score > -0.5}
+							Серая зона (-0.5 &lt; Z &lt; 0.0)
 						{:else}
-							Зона опасности (Z &lt; 1.81)
+							Зона опасности (Z &lt; -0.5)
 						{/if}
 					</div>
 				</div>

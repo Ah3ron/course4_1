@@ -11,7 +11,7 @@ export interface PredictionHistoryItem {
 	timestamp: string;
 	data: {
 		total_assets: number;
-		total_liabilities: number;
+		liabilities: number;
 		sales: number;
 	};
 	result: PredictionResponse;

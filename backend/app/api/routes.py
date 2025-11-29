@@ -1,5 +1,5 @@
 """
-API endpoints для оценки риска банкротства.
+API endpoints для оценки кредитных рисков.
 """
 
 import logging
@@ -17,7 +17,7 @@ from app.financial_models.model import calculate_bankruptcy_risk, get_model_info
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api", tags=["bankruptcy-risk"])
+router = APIRouter(prefix="/api", tags=["credit-risk"])
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -30,7 +30,7 @@ async def health_check() -> HealthResponse:
     """
     return HealthResponse(
         status="healthy",
-        message="Bankruptcy Risk Assessment API is running",
+        message="Credit Risk Assessment API is running",
         timestamp=datetime.now().isoformat()
     )
 
@@ -62,7 +62,7 @@ async def predict_bankruptcy_risk(
     financial_data: FinancialDataRequest
 ) -> PredictionResponse:
     """
-    Оценка риска банкротства компании с использованием моделей Альтмана и Таффлера.
+    Оценка кредитного риска компании с использованием статистических моделей Альтмана и Таффлера.
     
     Args:
         financial_data: Финансовые данные компании
@@ -75,9 +75,9 @@ async def predict_bankruptcy_risk(
     """
     try:
         logger.info(
-            f"Получен запрос на оценку риска банкротства: "
+            f"Получен запрос на оценку кредитного риска: "
             f"total_assets={financial_data.total_assets}, "
-            f"total_liabilities={financial_data.total_liabilities}"
+            f"liabilities={financial_data.liabilities}"
         )
         
         # Преобразуем данные в словарь
@@ -90,7 +90,7 @@ async def predict_bankruptcy_risk(
         
         logger.info(
             f"Оценка выполнена: Альтман Z={results['altman_z_score']}, "
-            f"Таффлер Z={results['taffler_z_score']}, "
+            f"Таффлер T={results['taffler_z_score']}, "
             f"Комбинированный риск={results['combined_risk_level']}"
         )
         
@@ -103,7 +103,7 @@ async def predict_bankruptcy_risk(
             detail=str(e)
         )
     except Exception as e:
-        logger.error(f"Ошибка при оценке риска банкротства: {e}", exc_info=True)
+        logger.error(f"Ошибка при оценке кредитного риска: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Ошибка при выполнении оценки: {str(e)}"

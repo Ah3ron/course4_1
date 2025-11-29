@@ -7,24 +7,22 @@ from typing import Literal, Optional
 
 
 class FinancialDataRequest(BaseModel):
-    """Модель запроса финансовых данных компании для оценки банкротства."""
+    """Модель запроса финансовых данных компании для оценки кредитных рисков."""
     
     # Данные для модели Альтмана
-    working_capital: float = Field(..., description="Оборотный капитал (текущие активы - текущие обязательства)")
-    total_assets: float = Field(..., gt=0, description="Общие активы")
-    retained_earnings: float = Field(..., description="Нераспределенная прибыль")
-    ebit: float = Field(..., description="Прибыль до уплаты процентов и налогов (EBIT)")
-    market_value_equity: float = Field(..., description="Рыночная стоимость собственного капитала")
-    total_liabilities: float = Field(..., gt=0, description="Общие обязательства")
-    sales: float = Field(..., description="Выручка")
+    current_assets: float = Field(..., description="Текущие активы")
+    current_liabilities: float = Field(..., gt=0, description="Текущие обязательства")
+    debt_capital: float = Field(..., description="Заемный капитал")
+    liabilities: float = Field(..., gt=0, description="Пассивы")
     
     # Данные для модели Таффлера
-    profit_before_tax: float = Field(..., description="Прибыль до налогообложения")
-    current_liabilities: float = Field(..., gt=0, description="Текущие обязательства")
-    current_assets: float = Field(..., description="Текущие активы")
-    operating_income: float = Field(..., description="Операционная прибыль")
+    sales_profit: float = Field(..., description="Прибыль от продаж")
+    short_term_liabilities: float = Field(..., gt=0, description="Краткосрочные обязательства")
+    long_term_liabilities: float = Field(..., description="Долгосрочные обязательства")
+    total_assets: float = Field(..., gt=0, description="Общая сумма активов")
+    sales: float = Field(..., description="Выручка от продаж")
     
-    @field_validator('total_assets', 'total_liabilities', 'current_liabilities')
+    @field_validator('current_liabilities', 'liabilities', 'short_term_liabilities', 'total_assets')
     @classmethod
     def validate_positive(cls, v):
         if v <= 0:
@@ -34,29 +32,27 @@ class FinancialDataRequest(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "working_capital": 500000,
-                "total_assets": 2000000,
-                "retained_earnings": 300000,
-                "ebit": 400000,
-                "market_value_equity": 1500000,
-                "total_liabilities": 500000,
-                "sales": 3000000,
-                "profit_before_tax": 350000,
-                "current_liabilities": 200000,
                 "current_assets": 700000,
-                "operating_income": 380000
+                "current_liabilities": 200000,
+                "debt_capital": 500000,
+                "liabilities": 800000,
+                "sales_profit": 300000,
+                "short_term_liabilities": 200000,
+                "long_term_liabilities": 300000,
+                "total_assets": 2000000,
+                "sales": 3000000
             }
         }
 
 
 class PredictionResponse(BaseModel):
-    """Модель ответа с результатами оценки банкротства."""
+    """Модель ответа с результатами оценки кредитных рисков."""
     
     altman_z_score: float = Field(..., description="Z-score модели Альтмана")
     altman_risk_level: str = Field(..., description="Уровень риска по модели Альтмана (low/medium/high)")
     altman_recommendation: str = Field(..., description="Рекомендация по модели Альтмана")
     
-    taffler_z_score: float = Field(..., description="Z-score модели Таффлера")
+    taffler_z_score: float = Field(..., description="T-score модели Таффлера")
     taffler_risk_level: str = Field(..., description="Уровень риска по модели Таффлера (low/medium/high)")
     taffler_recommendation: str = Field(..., description="Рекомендация по модели Таффлера")
     

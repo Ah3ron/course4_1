@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { isLoading, modelInfo, predictionHistory } from '$lib/stores';
-	import { getModelInfo, predictBankruptcyRisk, type FinancialData } from '$lib/api';
+	import { getModelInfo, predictCreditRisk, type FinancialData } from '$lib/api';
 	import type { PredictionResponse } from '$lib/api';
 
 	// Компоненты
@@ -13,18 +13,16 @@
 
 	let formData: FinancialData = {
 		// Данные для модели Альтмана
-		working_capital: 500000,
-		total_assets: 2000000,
-		retained_earnings: 300000,
-		ebit: 400000,
-		market_value_equity: 1500000,
-		total_liabilities: 500000,
-		sales: 3000000,
-		// Данные для модели Таффлера
-		profit_before_tax: 350000,
-		current_liabilities: 200000,
 		current_assets: 700000,
-		operating_income: 380000
+		current_liabilities: 200000,
+		debt_capital: 500000,
+		liabilities: 800000,
+		// Данные для модели Таффлера
+		sales_profit: 300000,
+		short_term_liabilities: 200000,
+		long_term_liabilities: 300000,
+		total_assets: 2000000,
+		sales: 3000000
 	};
 
 	let prediction: PredictionResponse | null = null;
@@ -52,12 +50,16 @@
 			formErrors.total_assets = 'Общие активы должны быть положительным числом';
 		}
 
-		if (!formData.total_liabilities || formData.total_liabilities <= 0) {
-			formErrors.total_liabilities = 'Общие обязательства должны быть положительным числом';
+		if (!formData.liabilities || formData.liabilities <= 0) {
+			formErrors.liabilities = 'Пассивы должны быть положительным числом';
 		}
 
 		if (!formData.current_liabilities || formData.current_liabilities <= 0) {
 			formErrors.current_liabilities = 'Текущие обязательства должны быть положительным числом';
+		}
+
+		if (!formData.short_term_liabilities || formData.short_term_liabilities <= 0) {
+			formErrors.short_term_liabilities = 'Краткосрочные обязательства должны быть положительным числом';
 		}
 
 		return Object.keys(formErrors).length === 0;
@@ -74,7 +76,7 @@
 
 		try {
 			isLoading.set(true);
-			const result = await predictBankruptcyRisk(formData);
+			const result = await predictCreditRisk(formData);
 			prediction = result;
 
 			// Добавляем в историю
@@ -83,13 +85,13 @@
 				timestamp: new Date().toISOString(),
 				data: {
 					total_assets: formData.total_assets,
-					total_liabilities: formData.total_liabilities,
+					liabilities: formData.liabilities,
 					sales: formData.sales
 				},
 				result
 			});
 		} catch (e) {
-			error = e instanceof Error ? e.message : 'Произошла ошибка при получении оценки';
+			error = e instanceof Error ? e.message : 'Произошла ошибка при оценке кредитного риска';
 			console.error('Ошибка оценки:', e);
 		} finally {
 			isLoading.set(false);
@@ -98,7 +100,7 @@
 </script>
 
 <svelte:head>
-	<title>Оценка риска банкротства</title>
+	<title>Система оценки кредитных рисков</title>
 </svelte:head>
 
 <div class="min-h-screen bg-base-200">
@@ -106,10 +108,10 @@
 		<!-- Заголовок -->
 		<div class="text-center mb-8" transition:fade={{ duration: 400 }}>
 			<h1 class="text-4xl font-bold mb-2 animate-fade-in-title">
-				Система оценки риска банкротства
+				Система оценки кредитных рисков
 			</h1>
 			<p class="text-lg text-base-content/70 animate-fade-in-subtitle">
-				Модели Альтмана и Таффлера для анализа финансового состояния компании
+				Программный модуль на основе статистических моделей Альтмана и Таффлера
 			</p>
 		</div>
 

@@ -35,7 +35,7 @@
 	<div class="card-body">
 		<div class="flex items-center gap-2 mb-4">
 			<div class="badge badge-secondary badge-lg animate-bounce-in">Таффлер</div>
-			<h3 class="card-title text-xl">Z-score модель</h3>
+			<h3 class="card-title text-xl">T-score модель</h3>
 		</div>
 		<div class="space-y-4">
 			<div
@@ -43,17 +43,17 @@
 				transition:fade={{ duration: 300, delay: 200 }}
 			>
 				<div class="stat">
-					<div class="stat-title">Z-score</div>
+					<div class="stat-title">T-score</div>
 					<div class="stat-value text-3xl animate-count-up">
 						{prediction.taffler_z_score.toFixed(4)}
 					</div>
 					<div class="stat-desc">
-						{#if prediction.taffler_z_score > 0.2}
-							Низкий риск (Z &gt; 0.2)
-						{:else if prediction.taffler_z_score > 0.0}
-							Средний риск (0.0 &lt; Z &lt; 0.2)
+						{#if prediction.taffler_z_score > 0.5}
+							Низкий риск (T &gt; 0.5)
+						{:else if prediction.taffler_z_score > 0.3}
+							Средний риск (0.3 &lt; T &lt; 0.5)
 						{:else}
-							Высокий риск (Z &lt; 0.0)
+							Высокий риск (T &lt; 0.3)
 						{/if}
 					</div>
 				</div>

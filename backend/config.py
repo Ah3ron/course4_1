@@ -16,8 +16,8 @@ API_PORT: int = int(os.getenv("API_PORT", "8000"))
 API_RELOAD: bool = os.getenv("API_RELOAD", "true").lower() == "true"
 
 # Настройки приложения
-APP_TITLE: str = "Bankruptcy Risk Assessment API"
-APP_DESCRIPTION: str = "API для оценки риска банкротства с использованием моделей Альтмана и Таффлера"
+APP_TITLE: str = "Credit Risk Assessment API"
+APP_DESCRIPTION: str = "Программный модуль системы оценки кредитных рисков на основе статистических моделей Альтмана и Таффлера"
 APP_VERSION: str = "2.0.0"
 
 # Настройки логирования

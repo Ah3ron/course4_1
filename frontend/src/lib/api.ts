@@ -6,19 +6,17 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export interface FinancialData {
 	// Данные для модели Альтмана
-	working_capital: number;
-	total_assets: number;
-	retained_earnings: number;
-	ebit: number;
-	market_value_equity: number;
-	total_liabilities: number;
-	sales: number;
+	current_assets: number;
+	current_liabilities: number;
+	debt_capital: number;
+	liabilities: number;
 
 	// Данные для модели Таффлера
-	profit_before_tax: number;
-	current_liabilities: number;
-	current_assets: number;
-	operating_income: number;
+	sales_profit: number;
+	short_term_liabilities: number;
+	long_term_liabilities: number;
+	total_assets: number;
+	sales: number;
 }
 
 export interface PredictionResponse {
@@ -71,9 +69,9 @@ export async function getModelInfo(): Promise<ModelInfo> {
 }
 
 /**
- * Получить оценку риска банкротства
+ * Получить оценку кредитного риска
  */
-export async function predictBankruptcyRisk(
+export async function predictCreditRisk(
 	financialData: FinancialData
 ): Promise<PredictionResponse> {
 	const response = await fetch(`${API_BASE_URL}/api/predict`, {
