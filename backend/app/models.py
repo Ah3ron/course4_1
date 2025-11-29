@@ -45,8 +45,40 @@ class FinancialDataRequest(BaseModel):
         }
 
 
+class IndividualDataRequest(BaseModel):
+    """Модель запроса данных физического лица для оценки кредитных рисков."""
+    
+    monthly_income: float = Field(..., gt=0, description="Месячный доход")
+    monthly_expenses: float = Field(..., gt=0, description="Месячные расходы")
+    credit_amount: float = Field(..., gt=0, description="Сумма запрашиваемого кредита")
+    credit_history_score: float = Field(..., ge=0, le=1, description="Оценка кредитной истории (0-1)")
+    has_collateral: int = Field(..., ge=0, le=1, description="Наличие залога (0 - нет, 1 - есть)")
+    employment_years: float = Field(..., ge=0, description="Трудовой стаж в годах")
+    age: int = Field(..., ge=18, le=100, description="Возраст в годах")
+    
+    @field_validator('monthly_income', 'monthly_expenses', 'credit_amount')
+    @classmethod
+    def validate_positive(cls, v):
+        if v <= 0:
+            raise ValueError('Значение должно быть положительным')
+        return float(v)
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "monthly_income": 100000,
+                "monthly_expenses": 60000,
+                "credit_amount": 500000,
+                "credit_history_score": 0.8,
+                "has_collateral": 1,
+                "employment_years": 5,
+                "age": 35
+            }
+        }
+
+
 class PredictionResponse(BaseModel):
-    """Модель ответа с результатами оценки кредитных рисков."""
+    """Модель ответа с результатами оценки кредитных рисков для юридических лиц."""
     
     altman_z_score: float = Field(..., description="Z-score модели Альтмана")
     altman_risk_level: str = Field(..., description="Уровень риска по модели Альтмана (low/medium/high)")
@@ -58,6 +90,14 @@ class PredictionResponse(BaseModel):
     
     combined_risk_level: str = Field(..., description="Комбинированный уровень риска (low/medium/high)")
     combined_recommendation: str = Field(..., description="Общая рекомендация")
+
+
+class IndividualPredictionResponse(BaseModel):
+    """Модель ответа с результатами оценки кредитных рисков для физических лиц."""
+    
+    credit_score: float = Field(..., description="Кредитный скоринг (300-850)")
+    risk_level: str = Field(..., description="Уровень риска (low/medium/high)")
+    recommendation: str = Field(..., description="Рекомендация по кредиту")
 
 
 class HealthResponse(BaseModel):

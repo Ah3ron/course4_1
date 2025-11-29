@@ -19,6 +19,16 @@ export interface FinancialData {
 	sales: number;
 }
 
+export interface IndividualData {
+	monthly_income: number;
+	monthly_expenses: number;
+	credit_amount: number;
+	credit_history_score: number;
+	has_collateral: number;
+	employment_years: number;
+	age: number;
+}
+
 export interface PredictionResponse {
 	altman_z_score: number;
 	altman_risk_level: 'low' | 'medium' | 'high';
@@ -28,6 +38,12 @@ export interface PredictionResponse {
 	taffler_recommendation: string;
 	combined_risk_level: 'low' | 'medium' | 'high';
 	combined_recommendation: string;
+}
+
+export interface IndividualPredictionResponse {
+	credit_score: number;
+	risk_level: 'low' | 'medium' | 'high';
+	recommendation: string;
 }
 
 export interface ModelInfo {
@@ -80,6 +96,28 @@ export async function predictCreditRisk(
 			'Content-Type': 'application/json'
 		},
 		body: JSON.stringify(financialData)
+	});
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ detail: 'Неизвестная ошибка' }));
+		throw new Error(error.detail || 'Ошибка при получении оценки');
+	}
+
+	return response.json();
+}
+
+/**
+ * Получить оценку кредитного риска для физического лица
+ */
+export async function predictIndividualCreditRisk(
+	individualData: IndividualData
+): Promise<IndividualPredictionResponse> {
+	const response = await fetch(`${API_BASE_URL}/api/predict/individual`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(individualData)
 	});
 
 	if (!response.ok) {

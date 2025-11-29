@@ -10,10 +10,12 @@ from fastapi import APIRouter, HTTPException, status
 from app.models import (
     FinancialDataRequest,
     PredictionResponse,
+    IndividualDataRequest,
+    IndividualPredictionResponse,
     HealthResponse,
     ModelInfoResponse
 )
-from app.financial_models.model import calculate_bankruptcy_risk, get_model_info
+from app.financial_models.model import calculate_bankruptcy_risk, calculate_individual_risk, get_model_info
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +106,59 @@ async def predict_bankruptcy_risk(
         )
     except Exception as e:
         logger.error(f"Ошибка при оценке кредитного риска: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка при выполнении оценки: {str(e)}"
+        )
+
+
+@router.post("/predict/individual", response_model=IndividualPredictionResponse)
+async def predict_individual_credit_risk(
+    individual_data: IndividualDataRequest
+) -> IndividualPredictionResponse:
+    """
+    Оценка кредитного риска физического лица с использованием скоринговой модели.
+    
+    Args:
+        individual_data: Данные физического лица
+        
+    Returns:
+        IndividualPredictionResponse с результатами оценки
+        
+    Raises:
+        HTTPException: При ошибке валидации или обработки данных
+    """
+    try:
+        logger.info(
+            f"Получен запрос на оценку кредитного риска для физ. лица: "
+            f"monthly_income={individual_data.monthly_income}, "
+            f"credit_amount={individual_data.credit_amount}, "
+            f"age={individual_data.age}"
+        )
+        
+        # Преобразуем данные в словарь
+        individual_dict = individual_data.model_dump()
+        
+        # Получаем результаты расчетов
+        results = calculate_individual_risk(individual_dict)
+        
+        result = IndividualPredictionResponse(**results)
+        
+        logger.info(
+            f"Оценка выполнена: Скоринг={results['credit_score']}, "
+            f"Уровень риска={results['risk_level']}"
+        )
+        
+        return result
+        
+    except ValueError as e:
+        logger.warning(f"Ошибка валидации данных: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Ошибка при оценке кредитного риска для физ. лица: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Ошибка при выполнении оценки: {str(e)}"

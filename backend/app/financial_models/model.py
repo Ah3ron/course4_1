@@ -10,6 +10,9 @@ from app.financial_models.financial_models import (
     calculate_taffler_score,
     calculate_combined_risk
 )
+from app.financial_models.individual_models import (
+    calculate_individual_credit_score
+)
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +111,38 @@ def calculate_bankruptcy_risk(financial_data: Dict) -> Dict:
         
     except Exception as e:
         logger.error(f"Ошибка при расчете кредитного риска: {e}", exc_info=True)
+        raise ValueError(f"Ошибка при выполнении расчета: {str(e)}")
+
+
+def calculate_individual_risk(individual_data: Dict) -> Dict:
+    """
+    Рассчитывает кредитный риск для физического лица.
+    
+    Args:
+        individual_data: Словарь с данными физического лица
+        
+    Returns:
+        Словарь с результатами расчетов:
+        {
+            'credit_score': float,
+            'risk_level': str,
+            'recommendation': str
+        }
+        
+    Raises:
+        ValueError: При ошибке валидации или расчета
+    """
+    try:
+        credit_score, risk_level, recommendation = calculate_individual_credit_score(individual_data)
+        
+        return {
+            'credit_score': round(credit_score, 2),
+            'risk_level': risk_level,
+            'recommendation': recommendation
+        }
+        
+    except Exception as e:
+        logger.error(f"Ошибка при расчете кредитного риска для физ. лица: {e}", exc_info=True)
         raise ValueError(f"Ошибка при выполнении расчета: {str(e)}")
 
 
