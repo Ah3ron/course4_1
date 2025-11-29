@@ -62,7 +62,7 @@
 		<div class="navbar-center">
 			<div class="flex gap-2">
 				<a
-					class="btn btn-ghost btn-sm {isActive('/') ? 'btn-active' : ''} transition-all duration-200"
+					class="btn btn-ghost  {isActive('/') ? 'btn-active' : ''} transition-all duration-200"
 					href="/"
 				>
 					<svg
@@ -82,7 +82,7 @@
 					Главная
 				</a>
 				<a
-					class="btn btn-ghost btn-sm {isActive('/statistics') ? 'btn-active' : ''} transition-all duration-200"
+					class="btn btn-ghost  {isActive('/statistics') ? 'btn-active' : ''} transition-all duration-200"
 					href="/statistics"
 				>
 					<svg
