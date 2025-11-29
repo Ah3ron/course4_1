@@ -9,6 +9,9 @@ from typing import Literal, Optional
 class FinancialDataRequest(BaseModel):
     """Модель запроса финансовых данных компании для оценки кредитных рисков."""
     
+    company_name: str = Field(..., min_length=1, max_length=255, description="Название организации")
+    assessment_date: str = Field(..., description="Дата оценки в формате YYYY-MM-DD")
+    
     # Данные для модели Альтмана
     current_assets: float = Field(..., description="Текущие активы")
     current_liabilities: float = Field(..., gt=0, description="Текущие обязательства")
@@ -47,6 +50,9 @@ class FinancialDataRequest(BaseModel):
 
 class IndividualDataRequest(BaseModel):
     """Модель запроса данных физического лица для оценки кредитных рисков."""
+    
+    full_name: str = Field(..., min_length=1, max_length=255, description="ФИО физического лица")
+    assessment_date: str = Field(..., description="Дата оценки в формате YYYY-MM-DD")
     
     monthly_income: float = Field(..., gt=0, description="Месячный доход")
     monthly_expenses: float = Field(..., gt=0, description="Месячные расходы")
@@ -114,4 +120,5 @@ class ModelInfoResponse(BaseModel):
     models: list[str] = Field(..., description="Список доступных моделей")
     altman_description: str = Field(..., description="Описание модели Альтмана")
     taffler_description: str = Field(..., description="Описание модели Таффлера")
+    individual_description: str = Field(..., description="Описание модели для физических лиц")
     required_fields: dict = Field(..., description="Требуемые поля для каждой модели")

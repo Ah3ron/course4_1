@@ -8,9 +8,15 @@
 
 	onMount(() => {
 		// Устанавливаем тему при загрузке
-		const stored = localStorage.getItem('theme') as 'light' | 'dark' | null;
-		if (stored) {
+		const stored = localStorage.getItem('theme');
+		if (stored === 'lofi' || stored === 'business') {
 			theme.set(stored);
+		} else if (stored === 'light') {
+			// Конвертируем старую светлую тему
+			theme.set('lofi');
+		} else if (stored === 'dark') {
+			// Конвертируем старую темную тему
+			theme.set('business');
 		}
 	});
 </script>
@@ -25,17 +31,19 @@
 </svelte:head>
 
 <div class="min-h-screen bg-base-200" data-theme={$theme}>
-	<div class="navbar bg-base-100 shadow-lg">
+	<div class="navbar bg-base-100 shadow-md border-b border-base-300">
 		<div class="flex-1">
-			<a class="btn btn-ghost text-xl" href="/">Кредитные риски</a>
+			<a class="btn btn-ghost text-xl font-semibold hover:bg-primary/10 transition-colors" href="/">Кредитные риски</a>
+			<a class="btn btn-ghost hover:bg-primary/10 transition-colors" href="/statistics">Статистика</a>
 		</div>
 		<div class="flex-none">
 			<button
-				class="btn btn-ghost btn-circle"
+				class="btn btn-ghost btn-circle hover:bg-primary/10 transition-all duration-200"
 				onclick={() => theme.toggle()}
 				aria-label="Переключить тему"
 			>
-				{#if $theme === 'light'}
+				{#if $theme === 'lofi'}
+					<!-- Иконка луны для переключения на темную тему -->
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						class="h-5 w-5"
@@ -51,6 +59,7 @@
 						/>
 					</svg>
 				{:else}
+					<!-- Иконка солнца для переключения на светлую тему -->
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						class="h-5 w-5"
@@ -74,9 +83,9 @@
 		{@render children()}
 	</main>
 
-	<footer class="footer footer-center p-4 bg-base-100 text-base-content mt-8">
+	<footer class="footer footer-center p-6 bg-base-100 text-base-content/70 mt-12 border-t border-base-300">
 		<div>
-			<p>Система оценки кредитных рисков © 2024</p>
+			<p class="text-sm">Система оценки кредитных рисков © 2024</p>
 		</div>
 	</footer>
 </div>

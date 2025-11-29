@@ -1,14 +1,16 @@
 <script lang="ts">
 	export let label: string;
-	export let value: number;
+	export let value: number | string;
 	export let error: string | undefined = undefined;
 	export let required: boolean = false;
-	export let placeholder: string = 'Введите сумму';
+	export let placeholder: string = 'Введите значение';
 	export let step: number = 1000;
 	export let hint: string = '';
 	export let span: number = 1;
+	export let type: 'number' | 'text' | 'date' = 'number';
 
 	const spanClass = span === 2 ? 'md:col-span-2' : '';
+	const inputType = type;
 </script>
 
 <label class="form-control w-full {spanClass}">
@@ -19,14 +21,14 @@
 		{/if}
 	</div>
 	<input
-		type="number"
-		class="input input-bordered w-full transition-all duration-200 hover:scale-[1.02] {error
+		type={inputType}
+		class="input input-bordered w-full {error
 			? 'input-error animate-shake-input'
-			: 'focus:input-primary focus:scale-[1.02]'}"
+			: 'focus:input-primary'}"
 		bind:value
-		{step}
 		{placeholder}
 		{required}
+		{...(type === 'number' ? { step } : {})}
 	/>
 	{#if error}
 		<div class="label">

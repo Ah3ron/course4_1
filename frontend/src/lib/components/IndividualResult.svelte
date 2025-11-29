@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fly, fade } from 'svelte/transition';
 	import type { IndividualPredictionResponse } from '$lib/api';
 
 	export let prediction: IndividualPredictionResponse;
@@ -37,17 +36,14 @@
 	}
 </script>
 
-<div class="card bg-base-200 shadow-md" transition:fly={{ y: 20, duration: 400 }}>
-	<div class="card-body">
+<div class="card bg-base-200 shadow-md smooth-appear">
+	<div class="card-body p-5">
 		<div class="flex items-center gap-2 mb-4">
-			<div class="badge badge-secondary badge-lg animate-bounce-in">Скоринг</div>
-			<h3 class="card-title text-xl">Кредитный скоринг</h3>
+			<div class="badge badge-secondary badge-lg">Скоринг</div>
+			<h3 class="card-title text-xl text-base-content">Кредитный скоринг</h3>
 		</div>
 		<div class="space-y-4">
-			<div
-				class="stats stats-vertical shadow w-full"
-				transition:fade={{ duration: 300, delay: 100 }}
-			>
+			<div class="stats stats-vertical w-full smooth-appear" style="animation-delay: 0.1s;">
 				<div class="stat">
 					<div class="stat-title">Кредитный скоринг</div>
 					<div class="stat-value text-3xl animate-count-up {getScoreColor(prediction.credit_score)}">
@@ -66,14 +62,14 @@
 				</div>
 			</div>
 			<div
-				class="alert shadow-lg {getRiskColor(prediction.risk_level) === 'success'
+				class="alert shadow-lg smooth-appear {getRiskColor(prediction.risk_level) === 'success'
 					? 'alert-success'
 					: getRiskColor(prediction.risk_level) === 'warning'
 						? 'alert-warning'
 						: getRiskColor(prediction.risk_level) === 'error'
 							? 'alert-error'
 							: 'alert-neutral'}"
-				transition:fade={{ duration: 300, delay: 200 }}
+				style="animation-delay: 0.2s;"
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

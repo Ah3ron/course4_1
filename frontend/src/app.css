@@ -1,12 +1,55 @@
 @import 'tailwindcss';
-@plugin 'daisyui';
+
+@plugin 'daisyui' {
+	themes: lofi --default, business --prefersdark;
+}
+
+/* Подавляем предупреждение о @plugin */
+@supports (display: grid) {
+	/* Поддержка современных браузеров */
+}
+
+/* Плавные переходы для всех элементов (исключая анимации) */
+* {
+	transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow;
+	transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+	transition-duration: 300ms;
+}
+
+/* Отключаем переходы для анимаций */
+.animate-fade-in-title,
+.animate-fade-in-subtitle,
+.animate-slide-down,
+.animate-shake,
+.animate-shake-input,
+.animate-bounce-in,
+.animate-count-up,
+.animate-fade-in-delay,
+.animate-fade-in-delay-2,
+.animate-fade-in,
+.smooth-appear {
+	transition: none;
+}
+
+/* Оптимизация производительности */
+.card,
+.btn,
+.input,
+.alert,
+.badge,
+.table {
+	will-change: opacity;
+	backface-visibility: hidden;
+	transform: translateZ(0);
+}
 
 /* Глобальные анимации */
 @keyframes fade-in-title {
 	from {
 		opacity: 0;
-		transform: translateY(-20px);
+		transform: translateY(-15px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
@@ -14,14 +57,15 @@
 }
 
 .animate-fade-in-title {
-	animation: fade-in-title 0.6s ease-out;
+	animation: fade-in-title 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 @keyframes fade-in-subtitle {
 	from {
 		opacity: 0;
-		transform: translateY(-10px);
+		transform: translateY(-8px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
@@ -29,14 +73,15 @@
 }
 
 .animate-fade-in-subtitle {
-	animation: fade-in-subtitle 0.6s ease-out 0.2s both;
+	animation: fade-in-subtitle 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.15s both;
 }
 
 @keyframes slide-down {
 	from {
 		opacity: 0;
-		transform: translateY(-10px);
+		transform: translateY(-8px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
@@ -44,7 +89,7 @@
 }
 
 .animate-slide-down {
-	animation: slide-down 0.4s ease-out;
+	animation: slide-down 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 @keyframes shake {
@@ -52,11 +97,13 @@
 	100% {
 		transform: translateX(0);
 	}
+
 	25% {
-		transform: translateX(-4px);
+		transform: translateX(-3px);
 	}
+
 	75% {
-		transform: translateX(4px);
+		transform: translateX(3px);
 	}
 }
 
@@ -65,32 +112,31 @@
 }
 
 .animate-shake-input {
-	animation: shake 0.4s ease-in-out;
+	animation: shake 0.35s ease-in-out;
 }
 
 @keyframes bounce-in {
 	0% {
-		transform: scale(0);
 		opacity: 0;
+		transform: scale(0.96);
 	}
-	50% {
-		transform: scale(1.1);
-	}
+
 	100% {
-		transform: scale(1);
 		opacity: 1;
+		transform: scale(1);
 	}
 }
 
 .animate-bounce-in {
-	animation: bounce-in 0.5s ease-out;
+	animation: bounce-in 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 @keyframes count-up {
 	from {
 		opacity: 0;
-		transform: translateY(10px);
+		transform: translateY(8px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
@@ -98,14 +144,15 @@
 }
 
 .animate-count-up {
-	animation: count-up 0.6s ease-out;
+	animation: count-up 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 @keyframes fade-in-delay {
 	0% {
 		opacity: 0;
-		transform: translateX(-10px);
+		transform: translateX(-8px);
 	}
+
 	100% {
 		opacity: 1;
 		transform: translateX(0);
@@ -113,24 +160,133 @@
 }
 
 .animate-fade-in-delay {
-	animation: fade-in-delay 0.5s ease-out 0.2s both;
+	animation: fade-in-delay 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.15s both;
 }
 
 .animate-fade-in-delay-2 {
-	animation: fade-in-delay 0.5s ease-out 0.4s both;
+	animation: fade-in-delay 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s both;
 }
 
 @keyframes fade-in {
 	from {
 		opacity: 0;
-		transform: scale(0.9);
 	}
+
 	to {
 		opacity: 1;
-		transform: scale(1);
 	}
 }
 
 .animate-fade-in {
-	animation: fade-in 0.3s ease-out;
+	animation: fade-in 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Плавное появление элементов */
+.smooth-appear {
+	opacity: 0;
+	animation: fade-in 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Улучшенные градиенты для заголовков */
+.bg-gradient-to-r {
+	background-image: linear-gradient(to right, var(--fallback-p, oklch(var(--p))), var(--fallback-s, oklch(var(--s))));
+}
+
+.bg-clip-text {
+	-webkit-background-clip: text;
+	background-clip: text;
+}
+
+
+/* Улучшенные тени и карточки */
+.card {
+	box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+	transition: box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+	border: 1px solid transparent;
+}
+
+.card:hover {
+	box-shadow: 0 8px 16px -4px rgb(0 0 0 / 0.08), 0 4px 8px -2px rgb(0 0 0 / 0.05);
+}
+
+/* Плавные hover эффекты для кнопок */
+.btn {
+	transition: background-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+		border-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+		color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+		box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+	position: relative;
+	overflow: hidden;
+}
+
+.btn:hover {
+	box-shadow: 0 4px 8px -2px rgb(0 0 0 / 0.1);
+}
+
+.btn:active {
+	box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Улучшенные инпуты */
+.input {
+	transition: border-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+		box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+		background-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.input:focus {
+	box-shadow: 0 0 0 3px rgb(var(--p) / 0.1);
+	outline: none;
+}
+
+.input:focus-visible {
+	outline: 2px solid oklch(var(--p));
+	outline-offset: 2px;
+}
+
+/* Улучшенные таблицы */
+.table {
+	transition: opacity 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.table tbody tr {
+	transition: background-color 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Улучшенные алерты */
+.alert {
+	transition: opacity 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+		box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Улучшенные бейджи */
+.badge {
+	transition: opacity 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+		background-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Плавные переходы для табов */
+.tab {
+	transition: background-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+		color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Улучшенные статистические карточки */
+.stat {
+	transition: opacity 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Плавные переходы для toggle */
+.toggle {
+	transition: background-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Улучшенные тени для навбара */
+.navbar {
+	transition: box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Плавные переходы для canvas (графиков) */
+canvas {
+	transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }

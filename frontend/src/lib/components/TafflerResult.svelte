@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fly, fade } from 'svelte/transition';
 	import type { PredictionResponse } from '$lib/api';
 
 	export let prediction: PredictionResponse;
@@ -31,42 +30,39 @@
 	}
 </script>
 
-<div class="card bg-base-200 shadow-md" transition:fly={{ y: 20, duration: 400, delay: 100 }}>
-	<div class="card-body">
+<div class="card bg-base-200 shadow-md smooth-appear" style="animation-delay: 0.1s;">
+	<div class="card-body p-5">
 		<div class="flex items-center gap-2 mb-4">
-			<div class="badge badge-secondary badge-lg animate-bounce-in">Таффлер</div>
-			<h3 class="card-title text-xl">T-score модель</h3>
+			<div class="badge badge-secondary badge-lg">Таффлер</div>
+			<h3 class="card-title text-xl text-base-content">T-score модель</h3>
 		</div>
 		<div class="space-y-4">
-			<div
-				class="stats stats-vertical shadow w-full"
-				transition:fade={{ duration: 300, delay: 200 }}
-			>
+			<div class="stats stats-vertical w-full smooth-appear" style="animation-delay: 0.15s;">
 				<div class="stat">
 					<div class="stat-title">T-score</div>
 					<div class="stat-value text-3xl animate-count-up">
 						{prediction.taffler_z_score.toFixed(4)}
 					</div>
 					<div class="stat-desc">
-						{#if prediction.taffler_z_score > 0.5}
-							Низкий риск (T &gt; 0.5)
-						{:else if prediction.taffler_z_score > 0.3}
-							Средний риск (0.3 &lt; T &lt; 0.5)
+						{#if prediction.taffler_z_score > 0.3}
+							Низкий риск дефолта (T &gt; 0.3)
+						{:else if prediction.taffler_z_score > 0.2}
+							Средний риск (0.2 &lt; T ≤ 0.3)
 						{:else}
-							Высокий риск (T &lt; 0.3)
+							Значительный риск потери платежеспособности (T ≤ 0.2)
 						{/if}
 					</div>
 				</div>
 			</div>
 			<div
-				class="alert shadow-lg {getRiskColor(prediction.taffler_risk_level) === 'success'
+				class="alert shadow-lg smooth-appear {getRiskColor(prediction.taffler_risk_level) === 'success'
 					? 'alert-success'
 					: getRiskColor(prediction.taffler_risk_level) === 'warning'
 						? 'alert-warning'
 						: getRiskColor(prediction.taffler_risk_level) === 'error'
 							? 'alert-error'
 							: 'alert-neutral'}"
-				transition:fade={{ duration: 300, delay: 300 }}
+				style="animation-delay: 0.2s;"
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

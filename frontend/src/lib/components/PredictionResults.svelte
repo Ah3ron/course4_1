@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fade } from 'svelte/transition';
 	import AltmanResult from './AltmanResult.svelte';
 	import TafflerResult from './TafflerResult.svelte';
 	import CombinedRiskAlert from './CombinedRiskAlert.svelte';
@@ -8,9 +7,9 @@
 	export let prediction: PredictionResponse;
 </script>
 
-<div class="card bg-base-100 shadow-xl" transition:fade={{ duration: 300 }}>
-	<div class="card-body">
-		<h2 class="card-title text-2xl mb-6 animate-slide-down">Результаты оценки</h2>
+<div class="card bg-base-100 shadow-xl smooth-appear">
+	<div class="card-body p-6">
+		<h2 class="card-title text-2xl mb-6 text-base-content">Результаты оценки</h2>
 
 		<div class="space-y-6">
 			<AltmanResult {prediction} />

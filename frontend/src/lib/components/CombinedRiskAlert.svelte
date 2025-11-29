@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fade, scale } from 'svelte/transition';
 	import type { PredictionResponse } from '$lib/api';
 
 	export let prediction: PredictionResponse;
@@ -32,14 +31,14 @@
 </script>
 
 <div
-	class="alert shadow-lg {getRiskColor(prediction.combined_risk_level) === 'success'
+	class="alert shadow-lg smooth-appear {getRiskColor(prediction.combined_risk_level) === 'success'
 		? 'alert-success'
 		: getRiskColor(prediction.combined_risk_level) === 'warning'
 			? 'alert-warning'
 			: getRiskColor(prediction.combined_risk_level) === 'error'
 				? 'alert-error'
 				: 'alert-neutral'}"
-	transition:scale={{ start: 0.9, duration: 400 }}
+	style="animation-delay: 0.25s;"
 >
 	<svg
 		xmlns="http://www.w3.org/2000/svg"

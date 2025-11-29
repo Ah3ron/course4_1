@@ -32,3 +32,9 @@ CORS_ORIGINS: List[str] = os.getenv(
 CORS_ALLOW_CREDENTIALS: bool = True
 CORS_ALLOW_METHODS: List[str] = ["*"]
 CORS_ALLOW_HEADERS: List[str] = ["*"]
+
+# Настройки базы данных
+DATABASE_URL: str = os.getenv(
+    "DATABASE_URL",
+    "postgresql://credit_risk:credit_risk_password@localhost:5432/credit_risk_db"
+)

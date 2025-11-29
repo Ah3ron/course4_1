@@ -3,12 +3,13 @@
  */
 
 import { writable } from 'svelte/store';
-import type { PredictionResponse, ModelInfo } from './api';
+import type { PredictionResponse, IndividualPredictionResponse, ModelInfo } from './api';
 
-// История предсказаний
-export interface PredictionHistoryItem {
+// История предсказаний для компаний
+export interface CompanyHistoryItem {
 	id: string;
 	timestamp: string;
+	type: 'company';
 	data: {
 		total_assets: number;
 		liabilities: number;
@@ -16,6 +17,22 @@ export interface PredictionHistoryItem {
 	};
 	result: PredictionResponse;
 }
+
+// История предсказаний для физических лиц
+export interface IndividualHistoryItem {
+	id: string;
+	timestamp: string;
+	type: 'individual';
+	data: {
+		monthly_income: number;
+		credit_amount: number;
+		credit_score: number;
+	};
+	result: IndividualPredictionResponse;
+}
+
+// Объединенный тип для истории
+export type PredictionHistoryItem = CompanyHistoryItem | IndividualHistoryItem;
 
 function createPredictionHistory() {
 	const { subscribe, set, update } = writable<PredictionHistoryItem[]>([]);
@@ -29,12 +46,23 @@ function createPredictionHistory() {
 					const parsed = JSON.parse(stored);
 					// Фильтруем только валидные записи с новым форматом
 					const validHistory = Array.isArray(parsed)
-						? parsed.filter(
-								(item: any) =>
-									item?.result?.altman_z_score !== undefined &&
-									item?.result?.taffler_z_score !== undefined &&
-									item?.result?.combined_risk_level !== undefined
-							)
+						? parsed.filter((item: any) => {
+								// Проверяем тип записи
+								if (item?.type === 'company') {
+									return (
+										item?.result?.altman_z_score !== undefined &&
+										item?.result?.taffler_z_score !== undefined &&
+										item?.result?.combined_risk_level !== undefined
+									);
+								} else if (item?.type === 'individual') {
+									return (
+										item?.result?.credit_score !== undefined &&
+										item?.result?.risk_level !== undefined &&
+										item?.result?.recommendation !== undefined
+									);
+								}
+								return false;
+							})
 						: [];
 					set(validHistory);
 					// Сохраняем очищенную историю обратно
@@ -96,16 +124,43 @@ export const modelInfo = writable<ModelInfo | null>(null);
 // Состояние загрузки
 export const isLoading = writable<boolean>(false);
 
-// Тема (light/dark)
+// Тема (светлая/темная)
+const LIGHT_THEME = 'lofi';
+const DARK_THEME = 'business';
+
+type ThemeName = typeof LIGHT_THEME | typeof DARK_THEME;
+
 function createTheme() {
-	const { subscribe, set, update } = writable<'light' | 'dark'>('light');
+	const { subscribe, set, update } = writable<ThemeName>(LIGHT_THEME);
+
+	// Определяем, является ли тема светлой
+	const isLightTheme = (theme: string): boolean => {
+		return theme === LIGHT_THEME;
+	};
+
+	// Получаем противоположную тему
+	const getOppositeTheme = (currentTheme: ThemeName): ThemeName => {
+		return isLightTheme(currentTheme) ? DARK_THEME : LIGHT_THEME;
+	};
 
 	if (typeof window !== 'undefined') {
 		try {
-			const stored = localStorage.getItem('theme') as 'light' | 'dark' | null;
-			if (stored && (stored === 'light' || stored === 'dark')) {
+			const stored = localStorage.getItem('theme') as ThemeName | null;
+			if (stored && (stored === LIGHT_THEME || stored === DARK_THEME)) {
 				set(stored);
 				document.documentElement.setAttribute('data-theme', stored);
+			} else {
+				// Если сохранена старая тема (light/dark), конвертируем
+				const oldStored = localStorage.getItem('theme');
+				if (oldStored === 'light') {
+					set(LIGHT_THEME);
+					document.documentElement.setAttribute('data-theme', LIGHT_THEME);
+					localStorage.setItem('theme', LIGHT_THEME);
+				} else if (oldStored === 'dark') {
+					set(DARK_THEME);
+					document.documentElement.setAttribute('data-theme', DARK_THEME);
+					localStorage.setItem('theme', DARK_THEME);
+				}
 			}
 		} catch (e) {
 			// Игнорируем ошибки localStorage
@@ -115,7 +170,7 @@ function createTheme() {
 
 	return {
 		subscribe,
-		set: (value: 'light' | 'dark') => {
+		set: (value: ThemeName) => {
 			set(value);
 			if (typeof window !== 'undefined') {
 				try {
@@ -130,7 +185,7 @@ function createTheme() {
 		},
 		toggle: () => {
 			update((current) => {
-				const newTheme = current === 'light' ? 'dark' : 'light';
+				const newTheme = getOppositeTheme(current);
 				if (typeof window !== 'undefined') {
 					try {
 						localStorage.setItem('theme', newTheme);
@@ -143,6 +198,13 @@ function createTheme() {
 				}
 				return newTheme;
 			});
+		},
+		isLight: () => {
+			let current: ThemeName = LIGHT_THEME;
+			subscribe((value) => {
+				current = value;
+			})();
+			return isLightTheme(current);
 		}
 	};
 }

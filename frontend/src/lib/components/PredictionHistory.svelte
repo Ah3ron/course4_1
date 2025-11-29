@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fade, fly } from 'svelte/transition';
 	import RiskBadge from './RiskBadge.svelte';
 	import type { PredictionHistoryItem } from '$lib/stores';
 
@@ -20,13 +19,13 @@
 	}
 </script>
 
-<div class="card bg-base-100 shadow-xl" transition:fly={{ y: -20, duration: 400, delay: 100 }}>
-	<div class="card-body">
+<div class="card bg-base-100 shadow-xl smooth-appear">
+	<div class="card-body p-5">
 		<div class="flex justify-between items-center mb-4">
-			<h2 class="card-title text-lg animate-slide-down">История оценок</h2>
+			<h2 class="card-title text-lg text-base-content">История оценок</h2>
 			{#if history.length > 0}
 				<button
-					class="btn btn-sm btn-ghost transition-all duration-200 hover:scale-110"
+					class="btn btn-sm btn-ghost"
 					onclick={clearHistory}
 					aria-label="Очистить историю"
 				>
@@ -36,7 +35,7 @@
 		</div>
 
 		{#if history.length === 0}
-			<div class="text-center py-8" transition:fade>
+			<div class="text-center py-8 smooth-appear">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="h-12 w-12 mx-auto text-base-content/30 mb-2 animate-pulse"
@@ -57,32 +56,44 @@
 			<div class="space-y-2 max-h-96 overflow-y-auto">
 				{#each history.slice(0, 10) as item, index (item.id)}
 					<div
-						class="card bg-base-200 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02] cursor-pointer"
-						transition:fly={{ y: 20, duration: 300, delay: index * 50 }}
+						class="card bg-base-200 shadow-sm hover:shadow-md cursor-pointer smooth-appear"
+						style="animation-delay: {index * 50}ms;"
 					>
 						<div class="card-body p-4">
 							<div class="flex justify-between items-start gap-2">
 								<div class="flex-1 min-w-0">
-									<p class="text-xs text-base-content/50 mb-1">
-										{new Date(item.timestamp).toLocaleString('ru-RU')}
-									</p>
-									<p class="text-sm font-semibold mb-1">
-										Риск: {item.result.combined_risk_level
-											? getRiskLabel(item.result.combined_risk_level)
-											: 'Неизвестно'}
-									</p>
-									{#if item.result.altman_z_score !== undefined && item.result.taffler_z_score !== undefined}
+									<div class="flex items-center gap-2 mb-1">
+										<span class="badge badge-xs {item.type === 'company' ? 'badge-primary' : 'badge-secondary'}">
+											{item.type === 'company' ? 'Компания' : 'Физ. лицо'}
+										</span>
+										<p class="text-xs text-base-content/50">
+											{new Date(item.timestamp).toLocaleString('ru-RU')}
+										</p>
+									</div>
+									{#if item.type === 'company'}
+										<p class="text-sm font-semibold mb-1">
+											Риск: {item.result.combined_risk_level
+												? getRiskLabel(item.result.combined_risk_level)
+												: 'Неизвестно'}
+										</p>
 										<p class="text-xs text-base-content/70">
 											Альтман: {item.result.altman_z_score.toFixed(2)} | Таффлер:
 											{item.result.taffler_z_score.toFixed(2)}
 										</p>
 									{:else}
-										<p class="text-xs text-base-content/50 italic">Старый формат данных</p>
+										<p class="text-sm font-semibold mb-1">
+											Риск: {getRiskLabel(item.result.risk_level)}
+										</p>
+										<p class="text-xs text-base-content/70">
+											Скоринг: {item.result.credit_score.toFixed(0)} | Сумма кредита:
+											{item.data.credit_amount.toLocaleString('ru-RU')} руб.
+										</p>
 									{/if}
 								</div>
-								{#if item.result.combined_risk_level}
-									<RiskBadge riskLevel={item.result.combined_risk_level} size="sm" />
-								{/if}
+								<RiskBadge
+									riskLevel={item.type === 'company' ? item.result.combined_risk_level : item.result.risk_level}
+									size="sm"
+								/>
 							</div>
 						</div>
 					</div>

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fade } from 'svelte/transition';
 	import FormField from './FormField.svelte';
 	import type { FinancialData } from '$lib/api';
 
@@ -10,12 +9,33 @@
 	export let handleSubmit: () => void = () => {};
 </script>
 
-<div class="card bg-base-100 shadow-xl" transition:fade={{ duration: 300 }}>
-	<div class="card-body">
-		<h2 class="card-title text-2xl mb-6 animate-slide-down">Финансовые показатели компании</h2>
+<div class="card bg-base-100 shadow-xl smooth-appear">
+	<div class="card-body p-6">
+		<h2 class="card-title text-2xl mb-6 text-base-content">Финансовые показатели компании</h2>
+
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+			<FormField
+				label="Название организации"
+				bind:value={formData.company_name}
+				error={formErrors.company_name}
+				required={true}
+				hint="Полное наименование организации"
+				type="text"
+				placeholder="Введите название организации"
+			/>
+
+			<FormField
+				label="Дата оценки"
+				bind:value={formData.assessment_date}
+				error={formErrors.assessment_date}
+				required={true}
+				hint="Дата оценки"
+				type="date"
+			/>
+		</div>
 
 		{#if error}
-			<div class="alert alert-error mb-4 animate-shake" transition:fade>
+			<div class="alert alert-error mb-4 animate-shake smooth-appear">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="stroke-current shrink-0 h-6 w-6"
@@ -41,7 +61,7 @@
 			class="space-y-6"
 		>
 			<!-- Модель Альтмана -->
-			<div transition:fade={{ duration: 200 }}>
+			<div class="smooth-appear">
 				<div class="divider">
 					<span class="text-lg font-semibold">Данные для модели Альтмана</span>
 				</div>
@@ -77,7 +97,7 @@
 			</div>
 
 			<!-- Модель Таффлера -->
-			<div transition:fade={{ duration: 200, delay: 100 }}>
+			<div class="smooth-appear">
 				<div class="divider">
 					<span class="text-lg font-semibold">Данные для модели Таффлера</span>
 				</div>
@@ -134,10 +154,10 @@
 			</div>
 
 			<!-- Кнопка отправки -->
-			<div class="flex justify-end mt-8" transition:fade={{ duration: 200, delay: 200 }}>
+			<div class="flex justify-end mt-8 smooth-appear">
 				<button
 					type="submit"
-					class="btn btn-primary btn-lg transition-all duration-200 hover:scale-105 active:scale-95"
+					class="btn btn-primary btn-lg"
 					disabled={isLoading}
 				>
 					{#if isLoading}

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { fade } from 'svelte/transition';
 	import { isLoading, modelInfo, predictionHistory } from '$lib/stores';
 	import {
 		getModelInfo,
@@ -24,6 +23,8 @@
 	let borrowerType: BorrowerType = 'company';
 
 	let formData: FinancialData = {
+		company_name: '',
+		assessment_date: new Date().toISOString().split('T')[0],
 		// Данные для модели Альтмана
 		current_assets: 700000,
 		current_liabilities: 200000,
@@ -38,6 +39,8 @@
 	};
 
 	let individualData: IndividualData = {
+		full_name: '',
+		assessment_date: new Date().toISOString().split('T')[0],
 		monthly_income: 100000,
 		monthly_expenses: 60000,
 		credit_amount: 500000,
@@ -70,6 +73,12 @@
 
 		if (borrowerType === 'company') {
 			// Валидация для юридических лиц
+			if (!formData.company_name || formData.company_name.trim() === '') {
+				formErrors.company_name = 'Название организации обязательно';
+			}
+			if (!formData.assessment_date) {
+				formErrors.assessment_date = 'Дата оценки обязательна';
+			}
 			if (!formData.total_assets || formData.total_assets <= 0) {
 				formErrors.total_assets = 'Общие активы должны быть положительным числом';
 			}
@@ -87,6 +96,12 @@
 			}
 		} else {
 			// Валидация для физических лиц
+			if (!individualData.full_name || individualData.full_name.trim() === '') {
+				formErrors.full_name = 'ФИО обязательно';
+			}
+			if (!individualData.assessment_date) {
+				formErrors.assessment_date = 'Дата оценки обязательна';
+			}
 			if (!individualData.monthly_income || individualData.monthly_income <= 0) {
 				formErrors.monthly_income = 'Месячный доход должен быть положительным числом';
 			}
@@ -138,6 +153,7 @@
 				predictionHistory.add({
 					id: Date.now().toString(),
 					timestamp: new Date().toISOString(),
+					type: 'company',
 					data: {
 						total_assets: formData.total_assets,
 						liabilities: formData.liabilities,
@@ -148,6 +164,19 @@
 			} else {
 				const result = await predictIndividualCreditRisk(individualData);
 				individualPrediction = result;
+
+				// Добавляем в историю
+				predictionHistory.add({
+					id: Date.now().toString(),
+					timestamp: new Date().toISOString(),
+					type: 'individual',
+					data: {
+						monthly_income: individualData.monthly_income,
+						credit_amount: individualData.credit_amount,
+						credit_score: result.credit_score
+					},
+					result
+				});
 			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Произошла ошибка при оценке кредитного риска';
@@ -163,13 +192,13 @@
 </svelte:head>
 
 <div class="min-h-screen bg-base-200">
-	<div class="container mx-auto px-4 py-8 max-w-7xl">
+	<div class="container mx-auto px-4 md:px-6 py-8 md:py-12 max-w-7xl">
 		<!-- Заголовок -->
-		<div class="text-center mb-8" transition:fade={{ duration: 400 }}>
-			<h1 class="text-4xl font-bold mb-2 animate-fade-in-title">
+		<div class="text-center mb-8">
+			<h1 class="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-primary to-secondary bg-clip-text animate-fade-in-title">
 				Система оценки кредитных рисков
 			</h1>
-			<p class="text-lg text-base-content/70 animate-fade-in-subtitle">
+			<p class="text-lg md:text-xl text-base-content/70 animate-fade-in-subtitle">
 				Программный модуль на основе статистических моделей для юридических и физических лиц
 			</p>
 		</div>
@@ -178,16 +207,16 @@
 			<!-- Основной контент -->
 			<div class="lg:col-span-2 space-y-6">
 				<!-- Переключатель типа заемщика -->
-				<div class="card bg-base-100 shadow-xl">
-					<div class="card-body">
+				<div class="card bg-base-100 shadow-xl smooth-appear">
+					<div class="card-body py-5">
 						<div class="form-control">
-							<label class="label cursor-pointer justify-center">
+							<label class="label cursor-pointer justify-center py-2">
 								<span class="label-text text-lg font-semibold mr-4">Тип заемщика:</span>
 								<div class="join">
 									<button
 										class="join-item btn {borrowerType === 'company'
 											? 'btn-primary'
-											: 'btn-outline'}"
+											: 'btn-outline btn-ghost'}"
 										onclick={() => {
 											borrowerType = 'company';
 											prediction = null;
@@ -200,7 +229,7 @@
 									<button
 										class="join-item btn {borrowerType === 'individual'
 											? 'btn-primary'
-											: 'btn-outline'}"
+											: 'btn-outline btn-ghost'}"
 										onclick={() => {
 											borrowerType = 'individual';
 											prediction = null;
@@ -217,30 +246,36 @@
 				</div>
 
 				<!-- Форма ввода данных -->
-				{#if borrowerType === 'company'}
-					<FinancialForm
-						bind:formData
-						bind:formErrors
-						isLoading={$isLoading}
-						bind:error
-						{handleSubmit}
-					/>
-				{:else}
-					<IndividualForm
-						bind:formData={individualData}
-						bind:formErrors
-						isLoading={$isLoading}
-						bind:error
-						{handleSubmit}
-					/>
-				{/if}
+				<div class="smooth-appear">
+					{#if borrowerType === 'company'}
+						<FinancialForm
+							bind:formData
+							bind:formErrors
+							isLoading={$isLoading}
+							bind:error
+							{handleSubmit}
+						/>
+					{:else}
+						<IndividualForm
+							bind:formData={individualData}
+							bind:formErrors
+							isLoading={$isLoading}
+							bind:error
+							{handleSubmit}
+						/>
+					{/if}
+				</div>
 
 				<!-- Результаты оценки -->
 				{#if prediction}
-					<PredictionResults {prediction} />
+					<div class="smooth-appear">
+						<PredictionResults {prediction} />
+					</div>
 				{/if}
 				{#if individualPrediction}
-					<IndividualResult prediction={individualPrediction} />
+					<div class="smooth-appear">
+						<IndividualResult prediction={individualPrediction} />
+					</div>
 				{/if}
 			</div>
 

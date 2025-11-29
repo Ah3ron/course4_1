@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fly, fade } from 'svelte/transition';
 	import RiskBadge from './RiskBadge.svelte';
 	import type { PredictionResponse } from '$lib/api';
 
@@ -32,42 +31,39 @@
 	}
 </script>
 
-<div class="card bg-base-200 shadow-md" transition:fly={{ y: 20, duration: 400 }}>
-	<div class="card-body">
+<div class="card bg-base-200 shadow-md smooth-appear">
+	<div class="card-body p-5">
 		<div class="flex items-center gap-2 mb-4">
-			<div class="badge badge-primary badge-lg animate-bounce-in">Альтман</div>
-			<h3 class="card-title text-xl">Z-score модель</h3>
+			<div class="badge badge-primary badge-lg">Альтман</div>
+			<h3 class="card-title text-xl text-base-content">Z-score модель</h3>
 		</div>
 		<div class="space-y-4">
-			<div
-				class="stats stats-vertical shadow w-full"
-				transition:fade={{ duration: 300, delay: 100 }}
-			>
+			<div class="stats stats-vertical w-full smooth-appear">
 				<div class="stat">
 					<div class="stat-title">Z-score</div>
 					<div class="stat-value text-3xl animate-count-up">
 						{prediction.altman_z_score.toFixed(4)}
 					</div>
 					<div class="stat-desc">
-						{#if prediction.altman_z_score > 0.0}
-							Безопасная зона (Z &gt; 0.0)
-						{:else if prediction.altman_z_score > -0.5}
-							Серая зона (-0.5 &lt; Z &lt; 0.0)
+						{#if prediction.altman_z_score < -0.5}
+							Безопасная зона (Z &lt; -0.5) - хорошее положение
+						{:else if prediction.altman_z_score < 0.0}
+							Серая зона (-0.5 ≤ Z &lt; 0.0)
 						{:else}
-							Зона опасности (Z &lt; -0.5)
+							Зона опасности (Z ≥ 0.0) - критичная ситуация
 						{/if}
 					</div>
 				</div>
 			</div>
 			<div
-				class="alert shadow-lg {getRiskColor(prediction.altman_risk_level) === 'success'
+				class="alert shadow-lg smooth-appear {getRiskColor(prediction.altman_risk_level) === 'success'
 					? 'alert-success'
 					: getRiskColor(prediction.altman_risk_level) === 'warning'
 						? 'alert-warning'
 						: getRiskColor(prediction.altman_risk_level) === 'error'
 							? 'alert-error'
 							: 'alert-neutral'}"
-				transition:fade={{ duration: 300, delay: 200 }}
+				style="animation-delay: 0.1s;"
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

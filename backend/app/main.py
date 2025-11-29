@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import config
 from app.api.routes import router
+from app.database import engine, Base
 
 # Настройка логирования
 logging.basicConfig(
@@ -38,6 +39,13 @@ app.add_middleware(
     allow_methods=config.CORS_ALLOW_METHODS,
     allow_headers=config.CORS_ALLOW_HEADERS,
 )
+
+# Создание таблиц базы данных
+@app.on_event("startup")
+async def startup_event():
+    """Создание таблиц при запуске приложения."""
+    Base.metadata.create_all(bind=engine)
+    logger.info("База данных инициализирована")
 
 # Подключение роутеров
 app.include_router(router)
