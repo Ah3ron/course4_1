@@ -8,4 +8,3 @@
 		<div class="stat-value">{total}</div>
 	</div>
 </div>
-

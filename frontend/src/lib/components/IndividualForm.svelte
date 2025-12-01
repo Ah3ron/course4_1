@@ -7,6 +7,25 @@
 	export let isLoading: boolean = false;
 	export let error: string | null = null;
 	export let handleSubmit: () => void = () => {};
+
+	// Локальная переменная для синхронизации с числовым значением
+	let hasCollateral: boolean = formData.has_collateral === 1;
+
+	// Синхронизация: когда formData.has_collateral изменяется извне, обновляем локальную переменную
+	$: {
+		const newValue = formData.has_collateral === 1;
+		if (hasCollateral !== newValue) {
+			hasCollateral = newValue;
+		}
+	}
+
+	// Синхронизация: когда локальная переменная изменяется через bind:checked, обновляем formData.has_collateral
+	$: {
+		const expectedValue = hasCollateral ? 1 : 0;
+		if (formData.has_collateral !== expectedValue) {
+			formData.has_collateral = expectedValue;
+		}
+	}
 </script>
 
 <div class="card bg-base-100 shadow-xl smooth-appear">
@@ -121,10 +140,7 @@
 						<input
 							type="checkbox"
 							class="toggle toggle-primary"
-							bind:checked={formData.has_collateral}
-							onchange={(e) => {
-								formData.has_collateral = e.target.checked ? 1 : 0;
-							}}
+							bind:checked={hasCollateral}
 						/>
 					</label>
 					<div class="label">
