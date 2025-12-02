@@ -20,7 +20,7 @@ FONT_SIZE_NORMAL = Pt(14)
 FONT_SIZE_HEADING_1 = Pt(16)
 FONT_SIZE_HEADING_2 = Pt(14)
 FONT_SIZE_HEADING_3 = Pt(14)
-FONT_SIZE_TABLE = Pt(12)
+FONT_SIZE_TABLE = Pt(14)
 FONT_SIZE_FIGURE = Pt(12)
 FONT_COLOR_BLACK = RGBColor(0, 0, 0)
 
@@ -255,12 +255,12 @@ def setup_styles(doc):
 
 
 def parse_markdown_formatting(text, para):
-    """Парсинг markdown форматирования (жирный, курсив) и добавление в параграф."""
+    """Парсинг markdown форматирования (жирный текст) и добавление в параграф."""
     if not text:
         return
     
     # Разбиваем текст на части, сохраняя разделители
-    # Сначала обрабатываем жирный текст **текст** или __текст__
+    # Обрабатываем жирный текст **текст** или __текст__
     parts = re.split(r'(\*\*[^*]+\*\*|__[^_]+__)', text)
     
     for part in parts:
@@ -281,30 +281,10 @@ def parse_markdown_formatting(text, para):
             run.font.name = FONT_NAME
             run.font.color.rgb = FONT_COLOR_BLACK
         else:
-            # Обрабатываем курсив в оставшемся тексте
-            italic_parts = re.split(r'(\*[^*]+\*|_[^_]+_)', part)
-            for italic_part in italic_parts:
-                if not italic_part:
-                    continue
-                
-                # Курсив *текст* или _текст_ (но не жирный)
-                if re.match(r'^\*[^*]+\*$', italic_part) and not italic_part.startswith('**'):
-                    italic_text = italic_part[1:-1]
-                    run = para.add_run(italic_text)
-                    run.italic = True
-                    run.font.name = FONT_NAME
-                    run.font.color.rgb = FONT_COLOR_BLACK
-                elif re.match(r'^_[^_]+_$', italic_part) and not italic_part.startswith('__'):
-                    italic_text = italic_part[1:-1]
-                    run = para.add_run(italic_text)
-                    run.italic = True
-                    run.font.name = FONT_NAME
-                    run.font.color.rgb = FONT_COLOR_BLACK
-                else:
-                    # Обычный текст
-                    run = para.add_run(italic_part)
-                    run.font.name = FONT_NAME
-                    run.font.color.rgb = FONT_COLOR_BLACK
+            # Обычный текст
+            run = para.add_run(part)
+            run.font.name = FONT_NAME
+            run.font.color.rgb = FONT_COLOR_BLACK
 
 
 def parse_markdown_table(table_text):
@@ -324,6 +304,212 @@ def parse_markdown_table(table_text):
             rows.append(cells)
     
     return rows
+
+
+
+
+def get_or_create_numbering(doc):
+    """Получает или создает numbering part для документа.
+    
+    Возвращает корневой элемент numbering.
+    """
+    part = doc.part
+    
+    # Пытаемся получить существующий numbering_part
+    try:
+        numbering_part = part.numbering_part
+        if numbering_part is not None:
+            # Возвращаем элемент numbering
+            return numbering_part.element
+    except AttributeError:
+        pass
+    
+    # Если numbering_part не существует, создаем его
+    numbering_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"></w:numbering>'
+    from docx.oxml import parse_xml
+    numbering_element = parse_xml(numbering_xml)
+    
+    # Создаем numbering part через package
+    from docx.opc.constants import RELATIONSHIP_TYPE as RT
+    package = part.package
+    
+    # Создаем новую часть
+    numbering_part = package.get_or_add_part(RT.NUMBERING, 'word/numbering.xml')
+    numbering_part.element = numbering_element
+    
+    # Связываем с основным документом
+    part.relate_to(numbering_part, RT.NUMBERING)
+    
+    return numbering_element
+
+
+def create_numbering_definitions(doc):
+    """Создание определений нумерации для нумерованных и маркированных списков.
+    
+    Возвращает словарь с информацией о созданных определениях.
+    """
+    # Получаем или создаем numbering
+    numbering = get_or_create_numbering(doc)
+    
+    # Создаем абстрактные определения для нумерованных списков
+    # Используем abstractNumId начиная с 0
+    abstract_num_id = 0
+    
+    # Абстрактное определение для нумерованных списков
+    abstract_num = OxmlElement('w:abstractNum')
+    abstract_num.set(qn('w:abstractNumId'), str(abstract_num_id))
+    
+    # Для каждого уровня создаем формат нумерации
+    for level in range(9):  # Поддерживаем до 9 уровней
+        lvl = OxmlElement('w:lvl')
+        lvl.set(qn('w:ilvl'), str(level))
+        
+        # Формат нумерации зависит от уровня
+        if level == 0:
+            numFmt = OxmlElement('w:numFmt')
+            numFmt.set(qn('w:val'), 'decimal')  # 1, 2, 3...
+            lvl.append(numFmt)
+        elif level == 1:
+            numFmt = OxmlElement('w:numFmt')
+            numFmt.set(qn('w:val'), 'lowerLetter')  # a, b, c...
+            lvl.append(numFmt)
+        elif level == 2:
+            numFmt = OxmlElement('w:numFmt')
+            numFmt.set(qn('w:val'), 'lowerRoman')  # i, ii, iii...
+            lvl.append(numFmt)
+        elif level == 3:
+            numFmt = OxmlElement('w:numFmt')
+            numFmt.set(qn('w:val'), 'decimal')  # 1, 2, 3...
+            lvl.append(numFmt)
+        else:
+            # Для остальных уровней используем decimal
+            numFmt = OxmlElement('w:numFmt')
+            numFmt.set(qn('w:val'), 'decimal')
+            lvl.append(numFmt)
+        
+        # Начало нумерации
+        start = OxmlElement('w:start')
+        start.set(qn('w:val'), '1')
+        lvl.append(start)
+        
+        # Формат текста для нумерации
+        lvlText = OxmlElement('w:lvlText')
+        if level == 0:
+            lvlText.set(qn('w:val'), '%1.')
+        elif level == 1:
+            lvlText.set(qn('w:val'), '%2.')
+        elif level == 2:
+            lvlText.set(qn('w:val'), '%3.')
+        else:
+            lvlText.set(qn('w:val'), f'%{level + 1}.')
+        lvl.append(lvlText)
+        
+        # Выравнивание
+        lvlJc = OxmlElement('w:lvlJc')
+        lvlJc.set(qn('w:val'), 'left')
+        lvl.append(lvlJc)
+        
+        # Отступы (будут переопределены в setup_list_formatting)
+        pPr = OxmlElement('w:pPr')
+        indent = OxmlElement('w:ind')
+        indent.set(qn('w:left'), '720')  # Базовый отступ
+        indent.set(qn('w:hanging'), '360')  # Висячий отступ
+        pPr.append(indent)
+        lvl.append(pPr)
+        
+        abstract_num.append(lvl)
+    
+    numbering.append(abstract_num)
+    
+    # Создаем абстрактное определение для маркированных списков
+    abstract_num_id_bullet = 1
+    abstract_num_bullet = OxmlElement('w:abstractNum')
+    abstract_num_bullet.set(qn('w:abstractNumId'), str(abstract_num_id_bullet))
+    
+    for level in range(9):
+        lvl = OxmlElement('w:lvl')
+        lvl.set(qn('w:ilvl'), str(level))
+        
+        # Формат маркера
+        numFmt = OxmlElement('w:numFmt')
+        numFmt.set(qn('w:val'), 'bullet')
+        lvl.append(numFmt)
+        
+        # Маркер
+        lvlText = OxmlElement('w:lvlText')
+        lvlText.set(qn('w:val'), '•')
+        lvl.append(lvlText)
+        
+        # Выравнивание
+        lvlJc = OxmlElement('w:lvlJc')
+        lvlJc.set(qn('w:val'), 'left')
+        lvl.append(lvlJc)
+        
+        # Отступы
+        pPr = OxmlElement('w:pPr')
+        indent = OxmlElement('w:ind')
+        indent.set(qn('w:left'), '720')
+        indent.set(qn('w:hanging'), '360')
+        pPr.append(indent)
+        lvl.append(pPr)
+        
+        abstract_num_bullet.append(lvl)
+    
+    numbering.append(abstract_num_bullet)
+    
+    return {
+        'numbered_abstract_id': abstract_num_id,
+        'bullet_abstract_id': abstract_num_id_bullet,
+        'next_num_id': 1  # Следующий доступный numId
+    }
+
+
+def create_num_instance(numbering, abstract_num_id, num_id):
+    """Создание экземпляра нумерации (num) на основе абстрактного определения."""
+    num = OxmlElement('w:num')
+    num.set(qn('w:numId'), str(num_id))
+    
+    abstractNumId = OxmlElement('w:abstractNumId')
+    abstractNumId.set(qn('w:val'), str(abstract_num_id))
+    num.append(abstractNumId)
+    
+    numbering.append(num)
+
+
+def setup_list_formatting(para, is_numbered, level, num_id):
+    """Настройка форматирования списка через XML для автоматической нумерации/маркировки.
+    
+    Args:
+        para: Параграф для форматирования
+        is_numbered: True для нумерованного списка, False для маркированного
+        level: Уровень вложенности (0-based)
+        num_id: ID нумерации (уникальный для каждого списка)
+    """
+    p = para._p
+    pPr = p.find(qn('w:pPr'))
+    if pPr is None:
+        pPr = OxmlElement('w:pPr')
+        p.insert(0, pPr)
+    
+    # Удаляем существующую нумерацию, если есть
+    existing_numPr = pPr.find(qn('w:numPr'))
+    if existing_numPr is not None:
+        pPr.remove(existing_numPr)
+    
+    # Создаем элемент нумерации
+    numPr = OxmlElement('w:numPr')
+    
+    # Уровень вложенности (0-based)
+    ilvl = OxmlElement('w:ilvl')
+    ilvl.set(qn('w:val'), str(level))
+    numPr.append(ilvl)
+    
+    # ID нумерации
+    numId = OxmlElement('w:numId')
+    numId.set(qn('w:val'), str(num_id))
+    numPr.append(numId)
+    
+    pPr.append(numPr)
 
 
 def format_table_borders(table):
@@ -516,6 +702,9 @@ def process_markdown_file(md_file_path, output_path):
     setup_page_settings(doc)
     setup_styles(doc)
     
+    # Инициализируем определения нумерации
+    numbering_info = create_numbering_definitions(doc)
+    
     # Добавляем нумерацию страниц (будет применяться ко всем разделам)
     add_page_numbering(doc)
     
@@ -536,6 +725,18 @@ def process_markdown_file(md_file_path, output_path):
     section_table_counters = {}
     section_figure_counters = {}
     
+    # Отслеживание состояния списков
+    list_context = {
+        'in_list': False,  # Находимся ли мы внутри списка
+        'list_type': None,  # 'numbered' или 'bullet' или None
+        'list_level': None,  # Текущий уровень вложенности
+        'list_num_id': None,  # Текущий numId (уникальный для каждого списка)
+        'list_levels': {}  # Словарь для отслеживания numId на каждом уровне вложенности
+    }
+    
+    # Счетчик для создания уникальных numId
+    next_num_id = numbering_info['next_num_id']
+    
     while i < len(lines):
         line = lines[i].rstrip()
         
@@ -552,6 +753,13 @@ def process_markdown_file(md_file_path, output_path):
                     add_table_to_doc(doc, table_data, section_num, section_table_counters[section_num])
                 in_table = False
                 table_lines = []
+            
+            # Заголовок прерывает список
+            list_context['in_list'] = False
+            list_context['list_type'] = None
+            list_context['list_level'] = None
+            list_context['list_num_id'] = None
+            list_context['list_levels'] = {}
             
             # Определяем уровень заголовка
             level = len(line) - len(line.lstrip('#'))
@@ -669,6 +877,12 @@ def process_markdown_file(md_file_path, output_path):
                 add_table_to_doc(doc, table_data, section_num, section_table_counters[section_num])
             in_table = False
             table_lines = []
+            # Таблица прерывает список
+            list_context['in_list'] = False
+            list_context['list_type'] = None
+            list_context['list_level'] = None
+            list_context['list_num_id'] = None
+            list_context['list_levels'] = {}
         
         # Обработка изображений
         if re.match(r'^!\[.*?\]\(.*?\)', line):
@@ -696,31 +910,162 @@ def process_markdown_file(md_file_path, output_path):
             continue
         
         # Обработка списков
-        if re.match(r'^\s*[-*+]\s+', line) or re.match(r'^\s*\d+\.\s+', line):
-            # Определяем уровень вложенности
-            indent_level = len(line) - len(line.lstrip())
-            list_text = re.sub(r'^\s*[-*+\d.]+\s+', '', line)
+        is_bullet_list = re.match(r'^\s*[-*+]\s+', line)
+        is_numbered_list = re.match(r'^\s*\d+\.\s+', line)
+        
+        if is_bullet_list or is_numbered_list:
+            # Определяем уровень вложенности по отступам
+            # В markdown вложенные списки обычно имеют отступ 2-4 пробела на уровень
+            leading_spaces = len(line) - len(line.lstrip())
+            # Определяем уровень: 0-2 пробела = уровень 0, 3-5 = уровень 1, 6-8 = уровень 2 и т.д.
+            indent_level = leading_spaces // 3 if leading_spaces > 2 else 0
+            # Ограничиваем уровень до 8 (максимум для стилей Word)
+            indent_level = min(indent_level, 8)
             
+            # Определяем тип текущего списка
+            current_list_type = 'numbered' if is_numbered_list else 'bullet'
+            
+            # Определяем, начинается ли новый список
+            # Новый список начинается, если:
+            # 1. Мы не находимся в списке (in_list = False)
+            # 2. Тип списка изменился (numbered <-> bullet)
+            # 3. Уровень вложенности уменьшился, и мы вернулись к уровню, для которого нет сохраненного numId
+            is_new_list = False
+            
+            if not list_context['in_list']:
+                # Начинаем новый список
+                is_new_list = True
+            elif list_context['list_type'] != current_list_type:
+                # Тип списка изменился - начинаем новый список
+                is_new_list = True
+            elif indent_level < list_context['list_level']:
+                # Уровень уменьшился - проверяем, есть ли сохраненный numId для этого уровня
+                if indent_level in list_context['list_levels']:
+                    # Есть сохраненный numId - продолжаем существующий список на этом уровне
+                    is_new_list = False
+                else:
+                    # Нет сохраненного numId - это новый список
+                    is_new_list = True
+            elif indent_level > list_context['list_level']:
+                # Уровень увеличился - это вложенный список, используем тот же numId
+                is_new_list = False
+            else:
+                # Уровень не изменился - продолжаем тот же список
+                is_new_list = False
+            
+            # Определяем numId для текущего элемента списка
+            if is_new_list:
+                # Создаем новый список - нужен новый numId
+                num_id = next_num_id
+                next_num_id += 1
+                
+                # Создаем экземпляр нумерации в документе
+                numbering = get_or_create_numbering(doc)
+                if current_list_type == 'numbered':
+                    abstract_num_id = numbering_info['numbered_abstract_id']
+                else:
+                    abstract_num_id = numbering_info['bullet_abstract_id']
+                create_num_instance(numbering, abstract_num_id, num_id)
+                
+                # Сохраняем numId для текущего уровня
+                list_context['list_levels'][indent_level] = num_id
+            else:
+                # Продолжаем существующий список
+                # Если есть сохраненный numId для текущего уровня, используем его
+                if indent_level in list_context['list_levels']:
+                    num_id = list_context['list_levels'][indent_level]
+                elif list_context['list_num_id'] is not None:
+                    # Используем numId из контекста (для вложенных уровней)
+                    num_id = list_context['list_num_id']
+                    # Сохраняем для текущего уровня
+                    list_context['list_levels'][indent_level] = num_id
+                else:
+                    # Если numId нет в контексте, создаем новый (не должно происходить в нормальных условиях)
+                    num_id = next_num_id
+                    next_num_id += 1
+                    numbering = get_or_create_numbering(doc)
+                    if current_list_type == 'numbered':
+                        abstract_num_id = numbering_info['numbered_abstract_id']
+                    else:
+                        abstract_num_id = numbering_info['bullet_abstract_id']
+                    create_num_instance(numbering, abstract_num_id, num_id)
+                    list_context['list_levels'][indent_level] = num_id
+            
+            # Извлекаем текст элемента списка (без маркера/номера)
+            if is_numbered_list:
+                list_text = re.sub(r'^\s*\d+\.\s+', '', line)
+            else:
+                list_text = re.sub(r'^\s*[-*+]\s+', '', line)
+            
+            # Создаем параграф с базовым стилем и добавляем нумерацию через XML
             para = doc.add_paragraph(style='Normal')
-            para.paragraph_format.first_line_indent = Cm(1.25 + indent_level * 0.5)
-            para.paragraph_format.left_indent = Cm(indent_level * 0.5)
-            # Обрабатываем форматирование в списке
+            # Настраиваем нумерацию/маркировку через XML
+            setup_list_formatting(para, is_numbered_list, indent_level, num_id)
+            
+            # Настройка отступов для списка
+            # Базовый отступ для списков (как у обычного текста)
+            base_indent = Cm(1.25)
+            indent_per_level = Cm(0.5)
+            
+            # Для первого уровня: отступ слева 1.25 см, висячий отступ для маркера/номера
+            # Для вложенных уровней: увеличиваем отступ слева
+            para.paragraph_format.left_indent = base_indent + (indent_per_level * indent_level)
+            para.paragraph_format.first_line_indent = Cm(-0.5)  # Висячий отступ для маркера/номера
+            
+            # Обрабатываем форматирование в тексте списка
             parse_markdown_formatting(list_text, para)
+            
             # Устанавливаем шрифт для всех runs в параграфе
             for run in para.runs:
                 run.font.name = FONT_NAME
                 run.font.size = FONT_SIZE_NORMAL
+                run.font.color.rgb = FONT_COLOR_BLACK
+            
+            # Обновляем контекст списка
+            list_context['in_list'] = True
+            list_context['list_type'] = current_list_type
+            list_context['list_level'] = indent_level
+            list_context['list_num_id'] = num_id
+            # Сохраняем numId для текущего уровня (если еще не сохранен)
+            if indent_level not in list_context['list_levels']:
+                list_context['list_levels'][indent_level] = num_id
             
             i += 1
             continue
         
         # Пропускаем пустые строки и разделители
         if not line.strip() or line.strip() == '---':
+            # Пустая строка прерывает список, если следующая строка не является продолжением списка
+            # Проверяем следующую строку
+            if i + 1 < len(lines):
+                next_line = lines[i + 1].rstrip()
+                next_is_list = bool(re.match(r'^\s*[-*+]\s+', next_line) or re.match(r'^\s*\d+\.\s+', next_line))
+                if not next_is_list:
+                    # Следующая строка не список - прерываем текущий список
+                    list_context['in_list'] = False
+                    list_context['list_type'] = None
+                    list_context['list_level'] = None
+                    list_context['list_num_id'] = None
+                    list_context['list_levels'] = {}
+            else:
+                # Это последняя строка - прерываем список
+                list_context['in_list'] = False
+                list_context['list_type'] = None
+                list_context['list_level'] = None
+                list_context['list_num_id'] = None
+                list_context['list_levels'] = {}
             i += 1
             continue
         
         # Обработка обычного текста
         if line.strip():
+            # Обычный текст прерывает список
+            list_context['in_list'] = False
+            list_context['list_type'] = None
+            list_context['list_level'] = None
+            list_context['list_num_id'] = None
+            list_context['list_levels'] = {}
+            
             # Проверяем, не является ли это формулой (упрощенная проверка)
             is_formula = (re.search(r'[XZ]\s*=\s*[\d\.]+\s*[X\+\-]', line) or 
                          re.search(r'[XZ]\s*=\s*[\d\.]+\s*X', line) or
