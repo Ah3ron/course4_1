@@ -390,7 +390,7 @@ def add_table_to_doc(doc, table_data, section_num, table_num, table_name=None):
     if not table_data or len(table_data) < 1:
         return
     
-    # Добавляем заголовок таблицы
+    # Добавляем заголовок таблицы (подпись над таблицей)
     table_caption = doc.add_paragraph()
     table_caption.alignment = WD_ALIGN_PARAGRAPH.LEFT
     table_caption.paragraph_format.first_line_indent = Cm(1.25)
@@ -407,8 +407,8 @@ def add_table_to_doc(doc, table_data, section_num, table_num, table_name=None):
     if table_name:
         caption_text = table_name
     elif len(table_data) > 0 and len(table_data[0]) > 0:
-        # Пытаемся использовать первую ячейку как название
-        caption_text = table_data[0][0]
+        # Пытаемся использовать первую ячейку первой строки как название
+        caption_text = table_data[0][0] if table_data[0] else f'Таблица {section_num}.{table_num}'
     else:
         caption_text = f'Таблица {section_num}.{table_num}'
     
@@ -418,45 +418,87 @@ def add_table_to_doc(doc, table_data, section_num, table_num, table_name=None):
     caption_run.bold = True
     caption_run.font.color.rgb = FONT_COLOR_BLACK
     
-    # Создаем таблицу (используем данные начиная со второй строки, если первая - заголовок)
-    # Определяем, является ли первая строка заголовком
-    start_row = 0
-    if len(table_data) > 1:
-        # Проверяем, есть ли разделитель или первая строка выглядит как заголовок
-        start_row = 1
+    # Определяем количество строк и столбцов
+    # Первая строка - заголовок таблицы, остальные - данные
+    header_row = table_data[0] if table_data else []
+    data_rows = table_data[1:] if len(table_data) > 1 else []
     
-    table_rows = len(table_data) - start_row if start_row > 0 else len(table_data)
-    if table_rows == 0:
+    # Определяем максимальное количество столбцов
+    max_cols = max(len(row) for row in table_data) if table_data else len(header_row)
+    if max_cols == 0:
         return
     
-    max_cols = max(len(row) for row in table_data[start_row:]) if table_data[start_row:] else len(table_data[0])
+    # Создаем таблицу: 1 строка заголовка + строки данных
+    table_rows = 1 + len(data_rows)
     table = doc.add_table(rows=table_rows, cols=max_cols)
     # Не используем стиль, чтобы иметь полный контроль над форматированием
     table.style = None
     
-    # Форматирование таблицы
-    for i, row_data in enumerate(table_data[start_row:]):
+    # Добавляем заголовок таблицы (первая строка) - жирным шрифтом
+    header_cells = table.rows[0].cells
+    for j, cell_data in enumerate(header_row):
+        if j < len(header_cells):
+            cell = header_cells[j]
+            cell.text = ''  # Очищаем ячейку
+            para = cell.paragraphs[0]
+            para.paragraph_format.first_line_indent = Cm(0)
+            para.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            para.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+            para.paragraph_format.line_spacing = Pt(18)
+            # Обрабатываем markdown форматирование в заголовке
+            parse_markdown_formatting(cell_data, para)
+            # Устанавливаем шрифт для всех runs в заголовке - жирным
+            for run in para.runs:
+                run.font.name = FONT_NAME
+                run.font.size = FONT_SIZE_TABLE
+                run.font.color.rgb = FONT_COLOR_BLACK
+                run.bold = True  # Заголовок жирным
+    
+    # Заполняем пустые ячейки заголовка, если столбцов больше чем данных
+    for j in range(len(header_row), max_cols):
+        if j < len(header_cells):
+            cell = header_cells[j]
+            cell.text = ''
+            para = cell.paragraphs[0]
+            para.paragraph_format.first_line_indent = Cm(0)
+            para.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            para.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+            para.paragraph_format.line_spacing = Pt(18)
+    
+    # Добавляем строки данных
+    for i, row_data in enumerate(data_rows):
+        row_index = i + 1  # +1 потому что первая строка - заголовок
+        if row_index >= len(table.rows):
+            break
+        data_cells = table.rows[row_index].cells
         for j, cell_data in enumerate(row_data):
-            if j < len(table.rows[i].cells):
-                cell = table.rows[i].cells[j]
-                cell.text = cell_data
-                
-                # Форматирование текста в ячейке
-                # Очищаем ячейку и добавляем текст с правильным форматированием
+            if j < len(data_cells):
+                cell = data_cells[j]
                 cell.text = ''  # Очищаем ячейку
                 para = cell.paragraphs[0]
                 para.paragraph_format.first_line_indent = Cm(0)
                 para.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
-                # Межстрочный интервал 18 пунктов согласно требованиям
                 para.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
-                para.paragraph_format.line_spacing = Pt(18)  # 18 пунктов
+                para.paragraph_format.line_spacing = Pt(18)
                 # Обрабатываем markdown форматирование в ячейке
                 parse_markdown_formatting(cell_data, para)
-                # Устанавливаем шрифт для всех runs в ячейке
+                # Устанавливаем шрифт для всех runs в ячейке - обычный (не жирный)
                 for run in para.runs:
                     run.font.name = FONT_NAME
                     run.font.size = FONT_SIZE_TABLE
                     run.font.color.rgb = FONT_COLOR_BLACK
+                    run.bold = False  # Данные не жирным
+        
+        # Заполняем пустые ячейки, если столбцов больше чем данных
+        for j in range(len(row_data), max_cols):
+            if j < len(data_cells):
+                cell = data_cells[j]
+                cell.text = ''
+                para = cell.paragraphs[0]
+                para.paragraph_format.first_line_indent = Cm(0)
+                para.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                para.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+                para.paragraph_format.line_spacing = Pt(18)
     
     # Применяем черные границы и прозрачный фон
     format_table_borders(table)
